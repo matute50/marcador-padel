@@ -16,3 +16,5 @@ Dado que `saladillovivo.com.ar` no posee un feed RSS nativo (carga el contenido 
 
 - **Infraestructura:** Se ha creado la estructura de carpetas del proyecto y se ha inicializado un repositorio de Git.
 - **Próximo Paso:** Implementar el servidor de Node.js para generar el feed RSS.
+
+**Versión del Documento:** 2.0
