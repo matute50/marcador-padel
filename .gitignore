@@ -1,0 +1,5 @@
+# Archivos y directorios temporales
+.tmp.driveupload/
+
+# Dependencias de proyectos
+**/node_modules/

@@ -1,0 +1,18 @@
+{
+  "name": "saladillovivo",
+  "version": "1.0.0",
+  "description": "El objetivo de este proyecto es crear un sistema que automatice la publicación de noticias desde el sitio web `saladillovivo.com.ar` a las redes sociales (Facebook e Instagram).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.1.0",
+    "puppeteer": "^24.17.1",
+    "rss": "^1.2.2"
+  }
+}
