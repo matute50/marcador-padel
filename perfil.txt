@@ -1,5 +1,10 @@
 Nombre de usuario: Matias
 
+## Sobre Matías (Personal)
+
+- **Profesión:** Productor audiovisual, especializado en filmación y streaming de eventos en vivo (sociales, deportivos, políticos, artísticos).
+- **Motivación Clave:** Siente una gran pasión por su proyecto 'Saladillo Vivo'. Lo considera su "gran desafío" no por la dificultad técnica, sino por su profundo deseo de verlo crecer y tener éxito.
+
 ## Observaciones de Gemini (2025-08-31)
 
 - Muestra un enfoque metódico y persistente en la resolución de problemas.
