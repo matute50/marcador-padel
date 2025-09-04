@@ -1,24 +1,77 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const homeButton = document.getElementById('homeButton');
     const statusDiv = document.getElementById('status');
 
-    homeButton.addEventListener('click', async () => {
-        statusDiv.textContent = 'Enviando comando Home...';
-        statusDiv.style.backgroundColor = '#444444';
+    // --- FUNCIN PRINCIPAL DE COMUNICACIN ---
+    const sendPtzCommand = async (action) => {
         try {
-            const response = await fetch('/api/ptz/home');
+            const response = await fetch('/api/ptz', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action }),
+            });
             const data = await response.json();
 
-            if (data.success) {
+            if (response.ok && data.success) {
                 statusDiv.textContent = data.message;
-                statusDiv.style.backgroundColor = '#28a745'; // Verde para éxito
+                statusDiv.style.backgroundColor = '#28a745'; // Verde
             } else {
-                statusDiv.textContent = `Error: ${data.message} - ${data.error}`;
-                statusDiv.style.backgroundColor = '#dc3545'; // Rojo para error
+                statusDiv.textContent = `Error: ${data.message}`;
+                statusDiv.style.backgroundColor = '#dc3545'; // Rojo
             }
         } catch (error) {
-            statusDiv.textContent = `Error de conexión: ${error.message}`;
-            statusDiv.style.backgroundColor = '#dc3545'; // Rojo para error
+            statusDiv.textContent = `Error de conexin: ${error.message}`;
+            statusDiv.style.backgroundColor = '#dc3545'; // Rojo
         }
+    };
+
+    // --- EVENT LISTENERS PARA BOTONES ---
+
+    // Botn Home (un solo clic)
+    document.getElementById('homeButton').addEventListener('click', () => {
+        statusDiv.textContent = 'Enviando comando Home...';
+        statusDiv.style.backgroundColor = '#444444';
+        sendPtzCommand('home');
     });
+
+    // Funcin para manejar eventos de presionar y soltar
+    const addHoldAndReleaseListeners = (elementId, action) => {
+        const element = document.getElementById(elementId);
+        let isZoom = action.includes('zoom');
+
+        element.addEventListener('mousedown', () => {
+            sendPtzCommand(action);
+        });
+
+        element.addEventListener('mouseup', () => {
+            const stopAction = isZoom ? 'zoomStop' : 'moveStop';
+            sendPtzCommand(stopAction);
+        });
+        
+        element.addEventListener('mouseleave', () => {
+             if (element.matches(':active')) {
+                const stopAction = isZoom ? 'zoomStop' : 'moveStop';
+                sendPtzCommand(stopAction);
+             }
+        });
+    };
+
+    // Mapeo de botones a acciones
+    const actions = {
+        'up': { action: 'tiltUp' },
+        'down': { action: 'tiltDown' },
+        'left': { action: 'panLeft' },
+        'right': { action: 'panRight' },
+        'up-left': { action: 'moveUpLeft' },
+        'up-right': { action: 'moveUpRight' },
+        'down-left': { action: 'moveDownLeft' },
+        'down-right': { action: 'moveDownRight' },
+        'zoom-in': { action: 'zoomIn' },
+        'zoom-out': { action: 'zoomOut' },
+    };
+
+    for (const [id, { action }] of Object.entries(actions)) {
+        addHoldAndReleaseListeners(id, action);
+    }
 });

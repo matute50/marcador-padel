@@ -1,62 +1,86 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #222222; /* Fondo oscuro similar a vMix */
-    color: #ffffff; /* Texto blanco */
-    margin: 0;
+    background-color: #222;
+    color: #eee;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
-
-.container {
-    background-color: #333333; /* Contenedor más claro que el fondo */
+    justify-content: left;
+    align-items: flex-start;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    text-align: center;
-    width: 90%;
-    max-width: 600px;
+    margin: 0;
 }
 
-h1 {
-    color: #00aaff; /* Azul brillante para títulos, similar a acentos de vMix */
+#control-panel {
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 20px;
+    width: 300px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+#status {
+    background-color: #444444;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+#d-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
     margin-bottom: 20px;
 }
 
-.controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.button {
-    background-color: #555555; /* Gris oscuro para botones */
-    color: #ffffff;
-    border: none;
-    padding: 15px 30px;
-    font-size: 1.1em;
-    border-radius: 5px;
+.d-pad-button, .zoom-button {
+    aspect-ratio: 1 / 1;
+    background-color: #505050;
+    border: 1px solid #666;
+    border-radius: 6px;
+    color: #ddd;
+    font-size: 24px;
+    font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.2s ease;
-    min-width: 120px;
+    transition: background-color 0.2s, transform 0.1s;
+    user-select: none; /* Evita la seleccin de texto al hacer clic rpido */
 }
 
-.button:hover {
-    background-color: #00aaff; /* Azul al pasar el ratón */
+.d-pad-button:hover, .zoom-button:hover {
+    background-color: #656565;
 }
 
-.button:active {
-    background-color: #0088cc; /* Azul más oscuro al hacer click */
+.d-pad-button:active, .zoom-button:active {
+    background-color: #0078d4; /* Azul similar a vMix */
+    transform: scale(0.95);
 }
 
-.status-message {
-    margin-top: 20px;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #444444;
-    color: #ffffff;
-    font-size: 0.9em;
+#homeButton {
+    font-size: 16px;
+    background-color: #2a2a2a;
+}
+
+#homeButton:active {
+     background-color: #005a9e;
+}
+
+#zoom-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#zoom-controls label {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ccc;
+}
+
+.zoom-button {
+    width: 60px;
+    height: 60px;
+    font-size: 32px;
 }
