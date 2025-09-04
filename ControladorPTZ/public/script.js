@@ -2,14 +2,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusDiv = document.getElementById('status');
 
     // --- FUNCIN PRINCIPAL DE COMUNICACIN ---
-    const sendPtzCommand = async (action) => {
+    const sendPtzCommand = async (action, value = null) => {
         try {
+            const body = { action };
+            if (value !== null) {
+                body.value = value;
+            }
+
             const response = await fetch('/api/ptz', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ action }),
+                body: JSON.stringify(body),
             });
             const data = await response.json();
 
@@ -74,4 +79,18 @@ document.addEventListener('DOMContentLoaded', () => {
     for (const [id, { action }] of Object.entries(actions)) {
         addHoldAndReleaseListeners(id, action);
     }
+
+    // --- EVENT LISTENERS PARA SLIDERS DE VELOCIDAD ---
+    const panTiltSpeedSlider = document.getElementById('panTiltSpeedSlider');
+    const zoomSpeedSlider = document.getElementById('zoomSpeedSlider');
+
+    panTiltSpeedSlider.addEventListener('input', (event) => {
+        const speed = event.target.value;
+        sendPtzCommand('setPanTiltSpeed', speed);
+    });
+
+    zoomSpeedSlider.addEventListener('input', (event) => {
+        const speed = event.target.value;
+        sendPtzCommand('setZoomSpeed', speed);
+    });
 });
