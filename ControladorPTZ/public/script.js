@@ -82,15 +82,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENT LISTENERS PARA SLIDERS DE VELOCIDAD ---
     const panTiltSpeedSlider = document.getElementById('panTiltSpeedSlider');
-    const zoomSpeedSlider = document.getElementById('zoomSpeedSlider');
-
-    panTiltSpeedSlider.addEventListener('input', (event) => {
-        const speed = event.target.value;
-        sendPtzCommand('setPanTiltSpeed', speed);
-    });
-
-    zoomSpeedSlider.addEventListener('input', (event) => {
-        const speed = event.target.value;
-        sendPtzCommand('setZoomSpeed', speed);
-    });
+    
 });

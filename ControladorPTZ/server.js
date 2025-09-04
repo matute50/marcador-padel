@@ -9,7 +9,7 @@ const VMIX_PORT = '8088';
 const VMIX_INPUT = '1';
 
 let currentPanTiltSpeed = 0.5; // Default speed (0.5 for 50% of max)
-let currentZoomSpeed = 0.5;   // Default speed
+
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -31,27 +31,27 @@ app.post('/api/ptz', async (req, res) => {
             break;
         case 'panLeft':
             functionName = 'PTZMoveLeft';
-            params.Speed = currentPanTiltSpeed;
+            params.Value = currentPanTiltSpeed;
             break;
         case 'panRight':
             functionName = 'PTZMoveRight';
-            params.Speed = currentPanTiltSpeed;
+            params.Value = currentPanTiltSpeed;
             break;
         case 'tiltUp':
             functionName = 'PTZMoveUp';
-            params.Speed = currentPanTiltSpeed;
+            params.Value = currentPanTiltSpeed;
             break;
         case 'tiltDown':
             functionName = 'PTZMoveDown';
-            params.Speed = currentPanTiltSpeed;
+            params.Value = currentPanTiltSpeed;
             break;
         case 'zoomIn':
             functionName = 'PTZZoomIn';
-            params.Speed = currentZoomSpeed;
+            params.Value = currentZoomSpeed;
             break;
         case 'zoomOut':
             functionName = 'PTZZoomOut';
-            params.Speed = currentZoomSpeed;
+            params.Value = currentZoomSpeed;
             break;
         case 'zoomStop':
             functionName = 'PTZZoomStop';
@@ -60,27 +60,25 @@ app.post('/api/ptz', async (req, res) => {
         // Implementacin de diagonales con PTZMove
         case 'moveUpLeft':
             functionName = 'PTZMoveUpLeft';
-            params.Speed = currentPanTiltSpeed;
+            params.Value = currentPanTiltSpeed;
             break;
         case 'moveUpRight':
             functionName = 'PTZMoveUpRight';
-            params.Speed = currentPanTiltSpeed;
+            params.Value = currentPanTiltSpeed;
             break;
         case 'moveDownLeft':
             functionName = 'PTZMoveDownLeft';
-            params.Speed = currentPanTiltSpeed;
+            params.Value = currentPanTiltSpeed;
             break;
         case 'moveDownRight':
             functionName = 'PTZMoveDownRight';
-            params.Speed = currentPanTiltSpeed;
+            params.Value = currentPanTiltSpeed;
             break;
 
         case 'setPanTiltSpeed':
             currentPanTiltSpeed = parseFloat((parseInt(value) / 100).toFixed(2));
             return res.json({ success: true, message: `Velocidad Pan/Tilt establecida a ${value}%` });
-        case 'setZoomSpeed':
-            currentZoomSpeed = parseFloat((parseInt(value) / 100).toFixed(2));
-            return res.json({ success: true, message: `Velocidad Zoom establecida a ${value}%` });
+        
 
         default:
             return res.status(400).json({ success: false, message: 'Accin no vlida' });
