@@ -1,0 +1,62 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #222222; /* Fondo oscuro similar a vMix */
+    color: #ffffff; /* Texto blanco */
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: #333333; /* Contenedor más claro que el fondo */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    width: 90%;
+    max-width: 600px;
+}
+
+h1 {
+    color: #00aaff; /* Azul brillante para títulos, similar a acentos de vMix */
+    margin-bottom: 20px;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.button {
+    background-color: #555555; /* Gris oscuro para botones */
+    color: #ffffff;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    min-width: 120px;
+}
+
+.button:hover {
+    background-color: #00aaff; /* Azul al pasar el ratón */
+}
+
+.button:active {
+    background-color: #0088cc; /* Azul más oscuro al hacer click */
+}
+
+.status-message {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #444444;
+    color: #ffffff;
+    font-size: 0.9em;
+}
