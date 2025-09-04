@@ -19,8 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                statusDiv.textContent = data.message;
-                statusDiv.style.backgroundColor = '#28a745'; // Verde
+                // Only update status if not a stop action
+                if (action !== 'moveStop' && action !== 'zoomStop') {
+                    statusDiv.textContent = data.message;
+                    statusDiv.style.backgroundColor = '#28a745'; // Verde
+                }
             } else {
                 statusDiv.textContent = `Error: ${data.message}`;
                 statusDiv.style.backgroundColor = '#dc3545'; // Rojo
@@ -82,5 +85,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENT LISTENERS PARA SLIDERS DE VELOCIDAD ---
     const panTiltSpeedSlider = document.getElementById('panTiltSpeedSlider');
+
+    panTiltSpeedSlider.addEventListener('input', (event) => {
+        const speed = event.target.value;
+        sendPtzCommand('setPanTiltSpeed', speed);
+    });
     
 });
