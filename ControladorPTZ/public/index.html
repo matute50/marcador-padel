@@ -8,34 +8,48 @@
 </head>
 <body>
     <div id="control-panel">
-        <div id="status">Listo</div>
 
-        <div id="d-pad">
-            <button id="up-left" class="d-pad-button">↖</button>
-            <button id="up" class="d-pad-button">↑</button>
-            <button id="up-right" class="d-pad-button">↗</button>
-            <button id="left" class="d-pad-button">←</button>
-            <button id="homeButton" class="d-pad-button">HOME</button>
-            <button id="right" class="d-pad-button">→</button>
-            <button id="down-left" class="d-pad-button">↙</button>
-            <button id="down" class="d-pad-button">↓</button>
-            <button id="down-right" class="d-pad-button">↘</button>
-        </div>
-
-        <div id="zoom-controls">
-            <button id="zoom-in" class="zoom-button">+</button>
-            <label>ZOOM</label>
-            <button id="zoom-out" class="zoom-button">-</button>
-        </div>
-
-        <div id="speed-controls">
-            <div class="speed-slider-group">
-                <label for="panTiltSpeedSlider">Velocidad Pan/Tilt:</label>
-                <input type="range" id="panTiltSpeedSlider" min="0" max="100" value="50">
+        <div id="all-controls-wrapper">
+            <div id="main-controls">
+                <div id="speed-controls">
+                    <div class="speed-slider-group">
+                        <input type="range" id="panTiltSpeedSlider" min="0" max="100" value="50">
+                    </div>
+                    
+                </div>
+                <div id="movement-and-zoom-controls">
+                    <div id="d-pad">
+                        <button id="up-left" class="d-pad-button">↖</button>
+                        <button id="up" class="d-pad-button">↑</button>
+                        <button id="up-right" class="d-pad-button">↗</button>
+                        <button id="left" class="d-pad-button">←</button>
+                        <button id="homeButton" class="d-pad-button">HOME</button>
+                        <button id="right" class="d-pad-button">→</button>
+                        <button id="down-left" class="d-pad-button">↙</button>
+                        <button id="down" class="d-pad-button">↓</button>
+                        <button id="down-right" class="d-pad-button">↘</button>
+                    </div>
+                    <div id="right-panel">
+                        <div id="zoom-controls">
+                            <button id="zoom-in" class="zoom-button">+</button>
+                            <button id="zoom-out" class="zoom-button">-</button>
+                        </div>
+                        <div id="status">Listo</div> <!-- Moved status here -->
+                    </div>
+                </div>
             </div>
-            
-        </div>
 
+            <div id="sequence-panel">
+                <div id="sequence-controls" style="margin-top: 20px; display: flex; justify-content: space-around;">
+                    <button id="recordSequenceButton" class="d-pad-button">Grabar Secuencia</button>
+                    <button id="playSequenceButton" class="d-pad-button">Reproducir Secuencia</button>
+                </div>
+
+                <div id="sequenceList" style="margin-top: 20px; padding: 10px; border: 1px solid #4a4a4a; border-radius: 4px; min-height: 50px; background-color: #333;">
+                    Lista de Secuencia:
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
