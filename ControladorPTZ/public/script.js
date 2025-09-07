@@ -3,21 +3,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const sequenceListDiv = document.getElementById('sequenceList');
     const recordSequenceButton = document.getElementById('recordSequenceButton');
     const playSequenceButton = document.getElementById('playSequenceButton');
-    const panTiltSpeedSlider = document.getElementById('panTiltSpeedSlider');
+    const pauseAfterInput = document.getElementById('pauseAfterInput'); // New element
+    // Removed panTiltSpeedSlider, calibrationFactorSlider, panTiltSpeedValue, calibrationFactorValue
 
     let recordingMode = false;
     let recordedSequence = [];
     let movementStartTime = 0;
 
+    // Removed initial display values for sliders
+
     // --- FUNCIN PRINCIPAL DE COMUNICACIN ---
-    const sendPtzCommand = async (action, value = null, recordData = null) => {
+    const sendPtzCommand = async (action, value = null) => {
         try {
             const body = { action };
             if (value !== null) {
                 body.value = value;
-            }
-            if (recordData) { // If this is data to be recorded
-                Object.assign(body, recordData);
             }
 
             const responsePromise = fetch('/api/ptz', {
@@ -26,38 +26,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(body),
             });
 
-            // For stop and home commands, await the response to ensure it's processed immediately.
             if (action === 'moveStop' || action === 'zoomStop' || action === 'home') {
                 const response = await responsePromise;
                 const data = await response.json();
                 if (!response.ok || !data.success) {
                     statusDiv.textContent = `Error: ${data.message}`;
-                    statusDiv.style.backgroundColor = '#dc3545'; // Rojo
+                    statusDiv.style.backgroundColor = '#dc3545';
                 }
             } else {
-                // For other commands, handle response asynchronously without blocking
-                responsePromise.then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            if (!recordData) { // Only update status if not recording data send
-                                statusDiv.style.backgroundColor = '#28a745'; // Verde
-                            }
-                            if (recordData) {
-                                updateSequenceListDisplay();
-                            }
-                        } else {
-                            statusDiv.textContent = `Error: ${data.message}`;
-                            statusDiv.style.backgroundColor = '#dc3545'; // Rojo
-                        }
-                    })
-                    .catch(error => {
-                        statusDiv.textContent = `Error de conexin: ${error.message}`;
-                        statusDiv.style.backgroundColor = '#dc3545'; // Rojo
-                    });
+                responsePromise.then(response => response.json()).then(data => {
+                    if (!data.success) {
+                        statusDiv.textContent = `Error: ${data.message}`;
+                        statusDiv.style.backgroundColor = '#dc3545';
+                    }
+                });
             }
         } catch (error) {
             statusDiv.textContent = `Error de conexin: ${error.message}`;
-            statusDiv.style.backgroundColor = '#dc3545'; // Rojo
+            statusDiv.style.backgroundColor = '#dc3545';
         }
     };
 
@@ -68,10 +54,504 @@ document.addEventListener('DOMContentLoaded', () => {
             sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
         } else {
             recordedSequence.forEach((step, index) => {
-                sequenceListDiv.innerHTML += `${index + 1}. ${step.action} - ${step.duration}ms - ${step.speed ? `Vel: ${step.speed}` : ''}<br>`;
+                let stepHtml = `<div>${index + 1}. `;
+                if (step.action === 'pause') {
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${step.duration}" min="0">ms`;
+                } else {
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${step.duration}" min="0">ms`;
+                }
+                if (step.pauseAfter !== undefined && step.pauseAfter > 0) { // Display pauseAfter
+                    stepHtml += ` + Pausa: ${step.pauseAfter}ms`;
+                }
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            const updateSequenceListDisplay = () => {
+        const playbackSpeed = 0.01; // Hardcoded for display calculation
+        const calibrationFactor = 0.73; // Hardcoded for display calculation
+
+        sequenceListDiv.innerHTML = 'Lista de Secuencia:<br>';
+        if (recordedSequence.length === 0) {
+            sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
+        } else {
+            recordedSequence.forEach((step, index) => {
+                let stepHtml = `<div>${index + 1}. `;
+                
+                let displayDuration;
+                let displayPauseAfter = step.pauseAfter || 0; // Default to 0 if not set
+
+                if (step.action === 'pause') {
+                    displayDuration = step.duration; // Pause duration is recorded duration
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0">ms`;
+                } else {
+                    // Calculate newDuration for display
+                    let newDurationMs;
+                    if (step.speed <= 0) {
+                        newDurationMs = step.duration; // Fallback for invalid recorded speed
+                    } else {
+                        const speedRatio = step.speed / playbackSpeed;
+                        newDurationMs = step.duration * Math.pow(speedRatio, calibrationFactor);
+                    }
+                    displayDuration = (newDurationMs / 1000).toFixed(2); // Convert to seconds
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0" step="0.01">s`;
+                }
+                
+                // Add pauseAfter input for all steps (including pauses, if desired)
+                stepHtml += ` Pausa: <input type="number" class="pause-after-input" data-index="${index}" value="${(displayPauseAfter / 1000).toFixed(2)}" min="0" step="0.01">s`;
+                
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            const updateSequenceListDisplay = () => {
+        const playbackSpeed = 0.01; // Hardcoded for display calculation
+        const calibrationFactor = 0.73; // Hardcoded for display calculation
+
+        sequenceListDiv.innerHTML = 'Lista de Secuencia:<br>';
+        if (recordedSequence.length === 0) {
+            sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
+        } else {
+            recordedSequence.forEach((step, index) => {
+                let stepHtml = `<div>${index + 1}. `;
+                
+                let displayDuration;
+                let displayPauseAfter = step.pauseAfter || 0; // Default to 0 if not set
+
+                if (step.action === 'pause') {
+                    displayDuration = step.duration; // Pause duration is recorded duration
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0">ms`;
+                } else {
+                    // Calculate newDuration for display
+                    let newDurationMs;
+                    if (step.speed <= 0) {
+                        newDurationMs = step.duration; // Fallback for invalid recorded speed
+                    } else {
+                        const speedRatio = step.speed / playbackSpeed;
+                        newDurationMs = step.duration * Math.pow(speedRatio, calibrationFactor);
+                    }
+                    displayDuration = (newDurationMs / 1000).toFixed(2); // Convert to seconds
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0" step="0.01">s`;
+                }
+                
+                // Add pauseAfter input for all steps (including pauses, if desired)
+                stepHtml += ` Pausa: <input type="number" class="pause-after-input" data-index="${index}" value="${(displayPauseAfter / 1000).toFixed(2)}" min="0" step="0.01">s`;
+                
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            const updateSequenceListDisplay = () => {
+        const playbackSpeed = 0.01; // Hardcoded for display calculation
+        const calibrationFactor = 0.73; // Hardcoded for display calculation
+
+        sequenceListDiv.innerHTML = 'Lista de Secuencia:<br>';
+        if (recordedSequence.length === 0) {
+            sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
+        } else {
+            recordedSequence.forEach((step, index) => {
+                let stepHtml = `<div>${index + 1}. `;
+                
+                let displayDuration;
+                let displayPauseAfter = step.pauseAfter || 0; // Default to 0 if not set
+
+                if (step.action === 'pause') {
+                    displayDuration = step.duration; // Pause duration is recorded duration
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0">ms`;
+                } else {
+                    // Calculate newDuration for display
+                    let newDurationMs;
+                    if (step.speed <= 0) {
+                        newDurationMs = step.duration; // Fallback for invalid recorded speed
+                    }
+                    else {
+                        const speedRatio = step.speed / playbackSpeed;
+                        newDurationMs = step.duration * Math.pow(speedRatio, calibrationFactor);
+                    }
+                    displayDuration = (newDurationMs / 1000).toFixed(2); // Convert to seconds
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0" step="0.01">s`;
+                }
+                
+                // Add pauseAfter input for all steps (including pauses, if desired)
+                stepHtml += ` Pausa: <input type="number" class="pause-after-input" data-index="${index}" value="${(displayPauseAfter / 1000).toFixed(2)}" min="0" step="0.01">s`;
+                
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            document.querySelectorAll('.duration-input').forEach(input => {
+                input.addEventListener('change', async (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    const newDuration = parseFloat(event.target.value) * 1000; // Convert back to ms
+                    if (!isNaN(newDuration) && newDuration >= 0) {
+                        recordedSequence[index].duration = newDuration;
+                        const result = await sendSequenceCommand('/api/sequence/updateStep', { index, duration: newDuration });
+                        if (result.success) {
+                            statusDiv.textContent = `Paso ${index + 1} actualizado a ${newDuration}ms.`;
+                            statusDiv.style.backgroundColor = '#28a745';
+                        }
+                        else {
+                            statusDiv.textContent = `Error al actualizar paso ${index + 1}: ${result.message}`;n                            statusDiv.style.backgroundColor = '#dc3545';
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('.pause-after-input').forEach(input => {
+                input.addEventListener('change', async (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    const newPauseAfter = parseFloat(event.target.value) * 1000; // Convert back to ms
+                    if (!isNaN(newPauseAfter) && newPauseAfter >= 0) {
+                        recordedSequence[index].pauseAfter = newPauseAfter;
+                        const result = await sendSequenceCommand('/api/sequence/updateStep', { index, pauseAfter: newPauseAfter });
+                        if (result.success) {
+                            statusDiv.textContent = `Pausa del paso ${index + 1} actualizada a ${newPauseAfter}ms.`;
+                            statusDiv.style.backgroundColor = '#28a745';
+                        }
+                        else {
+                            statusDiv.textContent = `Error al actualizar pausa del paso ${index + 1}: ${result.message}`;n                            statusDiv.style.backgroundColor = '#dc3545';
+                        }
+                    }
+                });
             });
         }
-    };
+
+            const updateSequenceListDisplay = () => {
+        const playbackSpeed = 0.01; // Hardcoded for display calculation
+        const calibrationFactor = 0.73; // Hardcoded for display calculation
+
+        sequenceListDiv.innerHTML = 'Lista de Secuencia:<br>';
+        if (recordedSequence.length === 0) {
+            sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
+        } else {
+            recordedSequence.forEach((step, index) => {
+                let stepHtml = `<div>${index + 1}. `;
+                
+                let displayDuration;
+                let displayPauseAfter = step.pauseAfter || 0; // Default to 0 if not set
+
+                if (step.action === 'pause') {
+                    displayDuration = step.duration; // Pause duration is recorded duration
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0">ms`;
+                } else {
+                    // Calculate newDuration for display
+                    let newDurationMs;
+                    if (step.speed <= 0) {
+                        newDurationMs = step.duration; // Fallback for invalid recorded speed
+                    }
+                    else {
+                        const speedRatio = step.speed / playbackSpeed;
+                        newDurationMs = step.duration * Math.pow(speedRatio, calibrationFactor);
+                    }
+                    displayDuration = (newDurationMs / 1000).toFixed(2); // Convert to seconds
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0" step="0.01">s`;
+                }
+                
+                // Add pauseAfter input for all steps (including pauses, if desired)
+                stepHtml += ` Pausa: <input type="number" class="pause-after-input" data-index="${index}" value="${(displayPauseAfter / 1000).toFixed(2)}" min="0" step="0.01">s`;
+                
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            document.querySelectorAll('.duration-input').forEach(input => {
+                input.addEventListener('change', async (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    const newDuration = parseFloat(event.target.value) * 1000; // Convert back to ms
+                    if (!isNaN(newDuration) && newDuration >= 0) {
+                        recordedSequence[index].duration = newDuration;
+                        const result = await sendSequenceCommand('/api/sequence/updateStep', { index, duration: newDuration });
+                        if (result.success) {
+                            statusDiv.textContent = `Paso ${index + 1} actualizado a ${newDuration}ms.`;
+                            statusDiv.style.backgroundColor = '#28a745';
+                        }
+                        else {
+                            statusDiv.textContent = `Error al actualizar paso ${index + 1}: ${result.message}`;n                            statusDiv.style.backgroundColor = '#dc3545';
+                        }
+                    }
+                });
+            });
+
+            const updateSequenceListDisplay = () => {
+        const playbackSpeed = 0.01; // Hardcoded for display calculation
+        const calibrationFactor = 0.73; // Hardcoded for display calculation
+
+        sequenceListDiv.innerHTML = 'Lista de Secuencia:<br>';
+        if (recordedSequence.length === 0) {
+            sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
+        } else {
+            recordedSequence.forEach((step, index) => {
+                let stepHtml = `<div>${index + 1}. `;
+                
+                let displayDuration;
+                let displayPauseAfter = step.pauseAfter || 0; // Default to 0 if not set
+
+                if (step.action === 'pause') {
+                    displayDuration = step.duration; // Pause duration is recorded duration
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0">ms`;
+                } else {
+                    // Calculate newDuration for display
+                    let newDurationMs;
+                    if (step.speed <= 0) {
+                        newDurationMs = step.duration; // Fallback for invalid recorded speed
+                    }
+                    else {
+                        const speedRatio = step.speed / playbackSpeed;
+                        newDurationMs = step.duration * Math.pow(speedRatio, calibrationFactor);
+                    }
+                    displayDuration = (newDurationMs / 1000).toFixed(2); // Convert to seconds
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0" step="0.01">s`;
+                }
+                
+                // Add pauseAfter input for all steps (including pauses, if desired)
+                stepHtml += ` Pausa: <input type="number" class="pause-after-input" data-index="${index}" value="${(displayPauseAfter / 1000).toFixed(2)}" min="0" step="0.01">s`;
+                
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            document.querySelectorAll('.duration-input').forEach(input => {
+                input.addEventListener('change', async (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    const newDuration = parseFloat(event.target.value) * 1000; // Convert back to ms
+                    if (!isNaN(newDuration) && newDuration >= 0) {
+                        recordedSequence[index].duration = newDuration;
+                        const result = await sendSequenceCommand('/api/sequence/updateStep', { index, duration: newDuration });
+                        if (result.success) {
+                            statusDiv.textContent = `Paso ${index + 1} actualizado a ${newDuration}ms.`;
+                            statusDiv.style.backgroundColor = '#28a745';
+                        }
+                        else {
+                            statusDiv.textContent = `Error al actualizar paso ${index + 1}: ${result.message}`;n                            statusDiv.style.backgroundColor = '#dc3545';
+                        }
+                    }
+                });
+            });
+
+            const updateSequenceListDisplay = () => {
+        const playbackSpeed = 0.01; // Hardcoded for display calculation
+        const calibrationFactor = 0.73; // Hardcoded for display calculation
+
+        sequenceListDiv.innerHTML = 'Lista de Secuencia:<br>';
+        if (recordedSequence.length === 0) {
+            sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
+        } else {
+            recordedSequence.forEach((step, index) => {
+                let stepHtml = `<div>${index + 1}. `;
+                
+                let displayDuration;
+                let displayPauseAfter = step.pauseAfter || 0; // Default to 0 if not set
+
+                if (step.action === 'pause') {
+                    displayDuration = step.duration; // Pause duration is recorded duration
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0">ms`;
+                } else {
+                    // Calculate newDuration for display
+                    let newDurationMs;
+                    if (step.speed <= 0) {
+                        newDurationMs = step.duration; // Fallback for invalid recorded speed
+                    }
+                    else {
+                        const speedRatio = step.speed / playbackSpeed;
+                        newDurationMs = step.duration * Math.pow(speedRatio, calibrationFactor);
+                    }
+                    displayDuration = (newDurationMs / 1000).toFixed(2); // Convert to seconds
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0" step="0.01">s`;
+                }
+                
+                // Add pauseAfter input for all steps (including pauses, if desired)
+                stepHtml += ` Pausa: <input type="number" class="pause-after-input" data-index="${index}" value="${(displayPauseAfter / 1000).toFixed(2)}" min="0" step="0.01">s`;
+                
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            document.querySelectorAll('.duration-input').forEach(input => {
+                input.addEventListener('change', async (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    const newDuration = parseFloat(event.target.value) * 1000; // Convert back to ms
+                    if (!isNaN(newDuration) && newDuration >= 0) {
+                        recordedSequence[index].duration = newDuration;
+                        const result = await sendSequenceCommand('/api/sequence/updateStep', { index, duration: newDuration });
+                        if (result.success) {
+                            statusDiv.textContent = `Paso ${index + 1} actualizado a ${newDuration}ms.`;
+                            statusDiv.style.backgroundColor = '#28a745';
+                        }
+                        else {
+                            statusDiv.textContent = `Error al actualizar paso ${index + 1}: ${result.message}`;n                            statusDiv.style.backgroundColor = '#dc3545';
+                        }
+                    }
+                });
+            });
+
+            const updateSequenceListDisplay = () => {
+        const playbackSpeed = 0.01; // Hardcoded for display calculation
+        const calibrationFactor = 0.73; // Hardcoded for display calculation
+
+        sequenceListDiv.innerHTML = 'Lista de Secuencia:<br>';
+        if (recordedSequence.length === 0) {
+            sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
+        } else {
+            recordedSequence.forEach((step, index) => {
+                let stepHtml = `<div>${index + 1}. `;
+                
+                let displayDuration;
+                let displayPauseAfter = step.pauseAfter || 0; // Default to 0 if not set
+
+                if (step.action === 'pause') {
+                    displayDuration = step.duration; // Pause duration is recorded duration
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0">ms`;
+                } else {
+                    // Calculate newDuration for display
+                    let newDurationMs;
+                    if (step.speed <= 0) {
+                        newDurationMs = step.duration; // Fallback for invalid recorded speed
+                    }
+                    else {
+                        const speedRatio = step.speed / playbackSpeed;
+                        newDurationMs = step.duration * Math.pow(speedRatio, calibrationFactor);
+                    }
+                    displayDuration = (newDurationMs / 1000).toFixed(2); // Convert to seconds
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0" step="0.01">s`;
+                }
+                
+                // Add pauseAfter input for all steps (including pauses, if desired)
+                stepHtml += ` Pausa: <input type="number" class="pause-after-input" data-index="${index}" value="${(displayPauseAfter / 1000).toFixed(2)}" min="0" step="0.01">s`;
+                
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            document.querySelectorAll('.duration-input').forEach(input => {
+                input.addEventListener('change', async (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    const newDuration = parseFloat(event.target.value) * 1000; // Convert back to ms
+                    if (!isNaN(newDuration) && newDuration >= 0) {
+                        recordedSequence[index].duration = newDuration;
+                        const result = await sendSequenceCommand('/api/sequence/updateStep', { index, duration: newDuration });
+                        if (result.success) {
+                            statusDiv.textContent = `Paso ${index + 1} actualizado a ${newDuration}ms.`;
+                            statusDiv.style.backgroundColor = '#28a745';
+                        }
+                        else {
+                            statusDiv.textContent = `Error al actualizar paso ${index + 1}: ${result.message}`;n                            statusDiv.style.backgroundColor = '#dc3545';
+                        }
+                    }
+                });
+            });
+
+            const updateSequenceListDisplay = () => {
+        const playbackSpeed = 0.01; // Hardcoded for display calculation
+        const calibrationFactor = 0.73; // Hardcoded for display calculation
+
+        sequenceListDiv.innerHTML = 'Lista de Secuencia:<br>';
+        if (recordedSequence.length === 0) {
+            sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
+        } else {
+            recordedSequence.forEach((step, index) => {
+                let stepHtml = `<div>${index + 1}. `;
+                
+                let displayDuration;
+                let displayPauseAfter = step.pauseAfter || 0; // Default to 0 if not set
+
+                if (step.action === 'pause') {
+                    displayDuration = step.duration; // Pause duration is recorded duration
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0">ms`;
+                } else {
+                    // Calculate newDuration for display
+                    let newDurationMs;
+                    if (step.speed <= 0) {
+                        newDurationMs = step.duration; // Fallback for invalid recorded speed
+                    }
+                    else {
+                        const speedRatio = step.speed / playbackSpeed;
+                        newDurationMs = step.duration * Math.pow(speedRatio, calibrationFactor);
+                    }
+                    displayDuration = (newDurationMs / 1000).toFixed(2); // Convert to seconds
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0" step="0.01">s`;
+                }
+                
+                // Add pauseAfter input for all steps (including pauses, if desired)
+                stepHtml += ` Pausa: <input type="number" class="pause-after-input" data-index="${index}" value="${(displayPauseAfter / 1000).toFixed(2)}" min="0" step="0.01">s`;
+                
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            const updateSequenceListDisplay = () => {
+        const playbackSpeed = 0.01; // Hardcoded for display calculation
+        const calibrationFactor = 0.73; // Hardcoded for display calculation
+
+        sequenceListDiv.innerHTML = 'Lista de Secuencia:<br>';
+        if (recordedSequence.length === 0) {
+            sequenceListDiv.innerHTML += '<em>(Vacía)</em>';
+        } else {
+            recordedSequence.forEach((step, index) => {
+                let stepHtml = `<div>${index + 1}. `;
+                
+                let displayDuration;
+                let displayPauseAfter = step.pauseAfter || 0; // Default to 0 if not set
+
+                if (step.action === 'pause') {
+                    displayDuration = step.duration; // Pause duration is recorded duration
+                    stepHtml += `PAUSA - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0">ms`;
+                } else {
+                    // Calculate newDuration for display
+                    let newDurationMs;
+                    if (step.speed <= 0) {
+                        newDurationMs = step.duration; // Fallback for invalid recorded speed
+                    }
+                    else {
+                        const speedRatio = step.speed / playbackSpeed;
+                        newDurationMs = step.duration * Math.pow(speedRatio, calibrationFactor);
+                    }
+                    displayDuration = (newDurationMs / 1000).toFixed(2); // Convert to seconds
+                    stepHtml += `${step.action} - <input type="number" class="duration-input" data-index="${index}" value="${displayDuration}" min="0" step="0.01">s`;
+                }
+                
+                // Add pauseAfter input for all steps (including pauses, if desired)
+                stepHtml += ` Pausa: <input type="number" class="pause-after-input" data-index="${index}" value="${(displayPauseAfter / 1000).toFixed(2)}" min="0" step="0.01">s`;
+                
+                stepHtml += `</div>`;
+                sequenceListDiv.innerHTML += stepHtml;
+            });
+            // Add event listeners to the new input fields
+            document.querySelectorAll('.duration-input').forEach(input => {
+                input.addEventListener('change', async (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    const newDuration = parseFloat(event.target.value) * 1000; // Convert back to ms
+                    if (!isNaN(newDuration) && newDuration >= 0) {
+                        recordedSequence[index].duration = newDuration;
+                        const result = await sendSequenceCommand('/api/sequence/updateStep', { index, duration: newDuration });
+                        if (result.success) {
+                            statusDiv.textContent = `Paso ${index + 1} actualizado a ${newDuration}ms.`;
+                            statusDiv.style.backgroundColor = '#28a745';
+                        }
+                        else {
+                            statusDiv.textContent = `Error al actualizar paso ${index + 1}: ${result.message}`;n                            statusDiv.style.backgroundColor = '#dc3545';
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('.pause-after-input').forEach(input => {
+                input.addEventListener('change', async (event) => {
+                    const index = parseInt(event.target.dataset.index);
+                    const newPauseAfter = parseFloat(event.target.value) * 1000; // Convert back to ms
+                    if (!isNaN(newPauseAfter) && newPauseAfter >= 0) {
+                        recordedSequence[index].pauseAfter = newPauseAfter;
+                        const result = await sendSequenceCommand('/api/sequence/updateStep', { index, pauseAfter: newPauseAfter });
+                        if (result.success) {
+                            statusDiv.textContent = `Pausa del paso ${index + 1} actualizada a ${newPauseAfter}ms.`;
+                            statusDiv.style.backgroundColor = '#28a745';
+                        }
+                        else {
+                            statusDiv.textContent = `Error al actualizar pausa del paso ${index + 1}: ${result.message}`;n                            statusDiv.style.backgroundColor = '#dc3545';
+                        }
+                    }
+                });
+            });
+        }
 
     const sendSequenceCommand = async (endpoint, data = {}) => {
         try {
@@ -96,21 +576,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- EVENT LISTENERS PARA BOTONES ---
-
-    // Botn Home (un solo clic)
     document.getElementById('homeButton').addEventListener('click', () => {
         statusDiv.textContent = 'Enviando comando Home...';
         statusDiv.style.backgroundColor = '#444444';
         sendPtzCommand('home');
     });
 
-    // Funcin para manejar eventos de presionar y soltar
     const addHoldAndReleaseListeners = (elementId, action) => {
         const element = document.getElementById(elementId);
         let isZoom = action.includes('zoom');
 
         element.addEventListener('mousedown', () => {
-            movementStartTime = Date.now(); // Capture start time
+            movementStartTime = Date.now();
             sendPtzCommand(action);
         });
 
@@ -121,11 +598,11 @@ document.addEventListener('DOMContentLoaded', () => {
             sendPtzCommand(stopAction);
 
             if (recordingMode) {
-                const speed = parseFloat((panTiltSpeedSlider.value / 100).toFixed(2)); // Get current speed from slider
-                const recordedStep = { action: action, duration: duration, speed: speed };
+                const speed = 0.5; // Hardcoded speed for recording, as slider is removed
+                const pauseAfter = parseInt(pauseAfterInput.value); // Get pause duration
+                const recordedStep = { action: action, duration: duration, speed: speed, pauseAfter: pauseAfter }; // Add pauseAfter
                 recordedSequence.push(recordedStep);
                 updateSequenceListDisplay();
-                // Send recorded step to backend
                 await sendSequenceCommand('/api/sequence/record', recordedStep);
             }
         });
@@ -138,63 +615,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Mapeo de botones a acciones
     const actions = {
-        'up': { action: 'tiltUp' },
-        'down': { action: 'tiltDown' },
-        'left': { action: 'panLeft' },
-        'right': { action: 'panRight' },
-        'up-left': { action: 'moveUpLeft' },
-        'up-right': { action: 'moveUpRight' },
-        'down-left': { action: 'moveDownLeft' },
-        'down-right': { action: 'moveDownRight' },
-        'zoom-in': { action: 'zoomIn' },
-        'zoom-out': { action: 'zoomOut' },
+        'up': { action: 'tiltUp' }, 'down': { action: 'tiltDown' }, 'left': { action: 'panLeft' }, 'right': { action: 'panRight' },
+        'up-left': { action: 'moveUpLeft' }, 'up-right': { action: 'moveUpRight' }, 'down-left': { action: 'moveDownLeft' }, 'down-right': { action: 'moveDownRight' },
+        'zoom-in': { action: 'zoomIn' }, 'zoom-out': { action: 'zoomOut' },
     };
 
     for (const [id, { action }] of Object.entries(actions)) {
         addHoldAndReleaseListeners(id, action);
     }
 
-    // --- EVENT LISTENERS PARA SLIDERS DE VELOCIDAD ---
-    panTiltSpeedSlider.addEventListener('input', (event) => {
-        const speed = event.target.value;
-        sendPtzCommand('setPanTiltSpeed', speed);
-    });
+    // Removed EVENT LISTENERS PARA SLIDERS
 
     // --- EVENT LISTENERS PARA BOTONES DE SECUENCIA ---
     recordSequenceButton.addEventListener('click', async () => {
         recordingMode = !recordingMode;
         if (recordingMode) {
             recordSequenceButton.textContent = 'Detener Grabación';
-            recordSequenceButton.style.backgroundColor = '#dc3545'; // Rojo
+            recordSequenceButton.style.backgroundColor = '#dc3545';
             statusDiv.textContent = 'Yendo a Home para grabar...';
-            statusDiv.style.backgroundColor = '#444444';
-            await sendPtzCommand('home'); // Go to Home before recording
-            recordedSequence = []; // Clear previous sequence
+            await sendPtzCommand('home');
+            recordedSequence = [];
             updateSequenceListDisplay();
             await sendSequenceCommand('/api/sequence/startRecording');
             statusDiv.textContent = 'Grabando secuencia...';
-            statusDiv.style.backgroundColor = '#ffc107'; // Amarillo
+            statusDiv.style.backgroundColor = '#ffc107';
         } else {
             recordSequenceButton.textContent = 'Grabar Secuencia';
-            recordSequenceButton.style.backgroundColor = ''; // Reset color
-            statusDiv.textContent = 'Yendo a Home al detener grabacin...';
-            statusDiv.style.backgroundColor = '#444444';
+            recordSequenceButton.style.backgroundColor = '';
             await sendSequenceCommand('/api/sequence/stopRecording');
-            await sendPtzCommand('home'); // Go to Home after recording
             statusDiv.textContent = 'Grabación detenida.';
-            statusDiv.style.backgroundColor = '#28a745'; // Verde
+            statusDiv.style.backgroundColor = '#28a745';
         }
     });
 
+    
+
     playSequenceButton.addEventListener('click', async () => {
         statusDiv.textContent = 'Reproduciendo secuencia...';
-        statusDiv.style.backgroundColor = '#007bff'; // Azul
-        const currentPlaybackSpeed = parseFloat((panTiltSpeedSlider.value / 100).toFixed(2));
-        await sendSequenceCommand('/api/sequence/play', { playbackSpeed: currentPlaybackSpeed });
+        statusDiv.style.backgroundColor = '#007bff';
+        const currentPlaybackSpeed = 0.01; // Hardcoded to 1%
+        const calibrationFactor = 0.73; // Hardcoded from user's finding
+        
+        await sendSequenceCommand('/api/sequence/play', { 
+            playbackSpeed: currentPlaybackSpeed,
+            calibrationFactor: calibrationFactor 
+        });
+
         statusDiv.textContent = 'Secuencia completada.';
-        statusDiv.style.backgroundColor = '#28a745'; // Verde
+        statusDiv.style.backgroundColor = '#28a745';
     });
 
     // Initial display update

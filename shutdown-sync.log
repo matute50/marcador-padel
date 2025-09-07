@@ -3,3 +3,31 @@
 [jue 04/09/2025 13:12:51,55] Iniciando script de cierre. 
 --------------------------------------------------- 
 [jue 04/09/2025 13:12:51,58] Ejecutando 'git add .'... 
+warning: in the working copy of 'ControladorPTZ/public/index.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ControladorPTZ/public/script.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ControladorPTZ/public/style.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ControladorPTZ/server.js', LF will be replaced by CRLF the next time Git touches it
+warning: adding embedded git repository: GeminiMemoriesRepo
+hint: You've added another git repository inside your current repository.
+hint: Clones of the outer repository will not contain the contents of
+hint: the embedded repository and will not know how to obtain it.
+hint: If you meant to add a submodule, use:
+hint:
+hint: 	git submodule add <url> GeminiMemoriesRepo
+hint:
+hint: If you added this path by mistake, you can remove it from the
+hint: index with:
+hint:
+hint: 	git rm --cached GeminiMemoriesRepo
+hint:
+hint: See "git help submodule" for more information.
+hint: Disable this message with "git config set advice.addEmbeddedRepo false"
+[jue 04/09/2025 13:12:51,66] Revisando si hay cambios para commitear... 
+[jue 04/09/2025 13:12:51,74] Cambios detectados. Ejecutando 'git commit'... 
+[master 7aea23f] Sync automatico al cierre de sesion
+ 6 files changed, 111 insertions(+), 4 deletions(-)
+ create mode 160000 GeminiMemoriesRepo
+ create mode 100644 shutdown-sync.log
+[jue 04/09/2025 13:12:51,74] ERROR: 'git commit' fallo. Revisa el log para mas detalles. 
+[jue 04/09/2025 13:12:51,87] Script de cierre finalizado. 
+--------------------------------------------------- 

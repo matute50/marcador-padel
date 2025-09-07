@@ -3,3 +3,4 @@
 
 # Dependencias de proyectos
 **/node_modules/
+"*.log" 

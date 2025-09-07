@@ -14,6 +14,6 @@ timeout /t 1 /nobreak > nul
 
 echo Iniciando nueva version...
 cd /d "F:\GEMINI-CLI\ControladorPTZ"
-start "PTZ_Server" cmd /c "node index.js >> server_startup.log 2>&1"
+start "PTZ_Server" cmd /c "node server.js"
 
 echo Servidor reiniciado en segundo plano.

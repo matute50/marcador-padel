@@ -1,0 +1,32 @@
+[
+  {
+    "action": "panLeft",
+    "duration": 3184,
+    "speed": 0.5,
+    "pauseAfter": 0
+  },
+  {
+    "action": "tiltUp",
+    "duration": 448,
+    "speed": 0.5,
+    "pauseAfter": 0
+  },
+  {
+    "action": "tiltDown",
+    "duration": 1176,
+    "speed": 0.5,
+    "pauseAfter": 0
+  },
+  {
+    "action": "panRight",
+    "duration": 4416,
+    "speed": 0.5,
+    "pauseAfter": 0
+  },
+  {
+    "action": "tiltDown",
+    "duration": 1560,
+    "speed": 0.5,
+    "pauseAfter": 0
+  }
+]
