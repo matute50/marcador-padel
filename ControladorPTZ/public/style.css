@@ -1,188 +1,180 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #1a1a1a;
-    color: #eee;
+    background-color: #2c2c2c;
+    color: #f0f0f0;
+    font-family: sans-serif;
     display: flex;
-    justify-content: left;
-    align-items: flex-start;
-    padding: 20px;
+    flex-direction: row; /* Cambiado a fila para layout horizontal */
+    align-items: flex-start; /* Alinea los elementos al inicio (arriba) */
+    justify-content: flex-start; /* Alinea el contenido al inicio (izquierda) */
+    height: 100vh;
     margin: 0;
-}
-
-#control-panel {
-    background-color: #2a2a2a;
-    border: 1px solid #3a3a3a;
-    border-radius: 8px;
     padding: 20px;
-    width: 460px; /* Adjust width to accommodate new layout */
-    box-shadow: none;
 }
 
-#status {
-    background-color: #3a3a3a;
-    border: 1px solid #4a4a4a;
-    border-radius: 4px;
-    color: #ddd;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-    user-select: none;
-    aspect-ratio: 1 / 1;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0; /* Remove padding as width/height are fixed */
-    /* margin-bottom: 20px; Removed as it's now in right-panel */
+h1 {
+    margin-bottom: 40px;
 }
 
-#status:hover {
-    background-color: #4a4a4a;
-}
-
-#status:active {
-    background-color: #0078d4;
-    transform: scale(0.95);
-}
-
-#all-controls-wrapper {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-}
-
-#main-controls {
-    display: flex;
-    flex-direction: column; /* Stack speed and movement/zoom controls vertically */
-    gap: 20px;
-    /* align-items: center; Removed as it's handled by all-controls-wrapper */
-}
-
-#movement-and-zoom-controls {
-    display: flex; /* Lay out d-pad and right-panel in a row */
-    gap: 20px;
-    align-items: flex-start;
-}
-
-#d-pad {
+#ptz-controls {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas:
+        ". up ."
+        "left stop right"
+        ". down .";
+    grid-template-columns: repeat(3, 80px);
+    grid-template-rows: repeat(3, 80px);
     gap: 10px;
-    margin-bottom: 0; /* Remove bottom margin as it's now in a flex container */
-    width: 200px; /* Explicitly set width */
 }
 
-.d-pad-button, .zoom-button {
-    aspect-ratio: 1 / 1;
-    background-color: #3a3a3a;
-    border: 1px solid #4a4a4a;
-    border-radius: 4px;
-    color: #ddd;
-    font-size: 18px;
+.ptz-btn {
+    background-color: #4a4a4a;
+    color: #f0f0f0;
+    border: 1px solid #666;
+    border-radius: 8px;
+    font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-    user-select: none; /* Evita la seleccin de texto al hacer clic rpido */
-    width: 60px; /* Explicitly set width */
-    height: 60px; /* Explicitly set height */
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.d-pad-button:hover, .zoom-button:hover {
-    background-color: #4a4a4a;
+.ptz-btn:hover {
+    background-color: #5a5a5a;
 }
 
-.d-pad-button:active, .zoom-button:active {
-    background-color: #0078d4; /* Azul similar a vMix */
+.ptz-btn:active {
+    background-color: #0078d4; /* vMix-like blue for active state */
     transform: scale(0.95);
 }
 
-#recordSequenceButton, #playSequenceButton {
-    width: 150px; /* Increased width */
-    height: 40px; /* Adjusted height */
-    font-size: 14px; /* Adjusted font size */
-    white-space: nowrap; /* Prevent text wrapping */
-    overflow: hidden; /* Hide overflow */
-    text-overflow: ellipsis; /* Add ellipsis for overflow */
-    /* Inherit other button styles from .d-pad-button */
-}
-
-#homeButton {
-    font-size: 12px;
+#ptz-up { grid-area: up; }
+#ptz-left { grid-area: left; }
+#ptz-home { 
+    grid-area: stop; 
     background-color: #3a3a3a;
+    font-size: 18px;
 }
+#ptz-right { grid-area: right; }
+#ptz-down { grid-area: down; }
 
-#homeButton:active {
-     background-color: #005a9e;
-}
-
-#right-panel {
-    display: flex;
-    flex-direction: column; /* Stack zoom and speed controls vertically */
-    gap: 10px; /* Space between zoom and speed controls */
-    width: 200px; /* Adjust width as needed */
+#ptz-stop:hover {
+    background-color: #c9302c; /* Red on hover for stop */
 }
 
 #zoom-controls {
     display: flex;
-    flex-direction: column; /* Stack buttons vertically */
-    gap: 10px; /* Add some space between buttons */
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.zoom-btn {
+    width: 80px;
+    height: 50px;
+    font-size: 24px;
+}
+
+#sequence-controls {
+    margin-bottom: 30px; /* Space below the button */
+    width: 100%; /* Take full width to center button */
+    display: flex;
+    justify-content: center; /* Center the button */
+    gap: 15px; /* Add gap between buttons */
+}
+
+.action-btn {
+    background-color: #0078d4; /* A prominent blue */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 30px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.action-btn:hover {
+    background-color: #005bb5;
+}
+
+.action-btn:active {
+    transform: scale(0.98);
+}
+
+#recorded-sequence-display {
+    margin-left: 40px;
+    background-color: #3a3a3a;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px; /* Adjust width as needed */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#recorded-sequence-display h2 {
+    color: #0078d4;
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+#sequence-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#sequence-list li {
+    background-color: #4a4a4a;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+#sequence-list li:last-child {
     margin-bottom: 0;
 }
 
-.zoom-button {
-    width: 60px;
-    height: 60px;
-    font-size: 32px;
+.movement-info {
+    flex-grow: 1;
 }
 
-#speed-controls {
-    margin-top: 0; /* Remove top margin */
-    padding-top: 0; /* Remove top padding */
-    border-top: none; /* Remove top border */
-}
-
-.speed-slider-group {
-    margin-bottom: 15px;
-}
-
-.speed-slider-group label {
-    display: block;
-    margin-bottom: 5px;
+.movement-time {
     font-weight: bold;
-    color: #ccc;
+    color: #aaffaa; /* Greenish for time */
+    margin-left: 10px;
 }
 
-input[type="range"] {
-    width: 100%;
-    -webkit-appearance: none;
-    height: 8px;
-    background: #4a4a4a;
-    border-radius: 5px;
-    outline: none;
-    opacity: 0.7;
-    transition: opacity .2s;
+#botones-container {
+    display: flex;
+    flex-direction: column; /* Stack PTZ and Zoom vertically */
+    gap: 30px; /* Space between PTZ and Zoom groups */
+    margin-right: 40px; /* Space between 'botones' and 'lista' */
 }
 
-input[type="range"]:hover {
-    opacity: 1;
+#lista-container {
+    display: flex;
+    flex-direction: column; /* Stack record button and list vertically */
+    gap: 30px; /* Space between record button and list */
 }
 
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #0078d4;
-    cursor: pointer;
+.movement-details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-input[type="range"]::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #0078d4;
-    cursor: pointer;
+.movement-pause input {
+    width: 50px; /* Adjust width as needed */
+    padding: 5px;
+    border: 1px solid #666;
+    border-radius: 4px;
+    background-color: #3a3a3a;
+    color: #f0f0f0;
+    font-size: 14px;
+    text-align: center;
 }

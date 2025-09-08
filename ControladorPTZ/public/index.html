@@ -3,51 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controlador PTZ vMix</title>
+    <title>Controlador PTZ</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="control-panel">
+    <div id="botones-container">
+        <div id="ptz-controls">
+            <button id="ptz-up" class="ptz-btn" data-direction="up">↑</button>
+            <button id="ptz-left" class="ptz-btn" data-direction="left">←</button>
+            <button id="ptz-home" class="ptz-btn">HOME</button>
+            <button id="ptz-right" class="ptz-btn" data-direction="right">→</button>
+            <button id="ptz-down" class="ptz-btn" data-direction="down">↓</button>
+        </div>
 
-        <div id="all-controls-wrapper">
-            <div id="main-controls">
-                
-                <div id="movement-and-zoom-controls">
-                    <div id="d-pad">
-                        <button id="up-left" class="d-pad-button">↖</button>
-                        <button id="up" class="d-pad-button">↑</button>
-                        <button id="up-right" class="d-pad-button">↗</button>
-                        <button id="left" class="d-pad-button">←</button>
-                        <button id="homeButton" class="d-pad-button">HOME</button>
-                        <button id="right" class="d-pad-button">→</button>
-                        <button id="down-left" class="d-pad-button">↙</button>
-                        <button id="down" class="d-pad-button">↓</button>
-                        <button id="down-right" class="d-pad-button">↘</button>
-                    </div>
-                    <div id="right-panel">
-                        <div id="zoom-controls">
-                            <button id="zoom-in" class="zoom-button">+</button>
-                            <button id="zoom-out" class="zoom-button">-</button>
-                        </div>
-                        <div id="status">Listo</div> <!-- Moved status here -->
-                    </div>
-                </div>
-            </div>
+        <div id="zoom-controls">
+            <button id="zoom-out" class="ptz-btn zoom-btn" data-command="zoom-out">-</button>
+            <button id="zoom-in" class="ptz-btn zoom-btn" data-command="zoom-in">+</button>
+        </div>
+    </div>
 
-            <div id="sequence-panel">
-                <div id="sequence-controls" style="margin-top: 20px; display: flex; justify-content: space-around;">
-                    <button id="recordSequenceButton" class="d-pad-button">Grabar Secuencia</button>
-                    <button id="playSequenceButton" class="d-pad-button">Reproducir Secuencia</button>
-                    <div style="display: flex; align-items: center;">
-                        <label for="pauseAfterInput">Pausa (ms):</label>
-                        <input type="number" id="pauseAfterInput" value="0" min="0" style="width: 60px; margin-left: 5px;">
-                    </div>
-                </div>
+    <div id="lista-container">
+        <div id="sequence-controls">
+            <button id="record-sequence-btn" class="action-btn">Grabar Secuencia</button>
+        <button id="play-sequence-btn" class="action-btn">Reproducir Secuencia</button>
+        </div>
 
-                <div id="sequenceList" style="margin-top: 20px; padding: 10px; border: 1px solid #4a4a4a; border-radius: 4px; min-height: 50px; background-color: #333;">
-                    Lista de Secuencia:
-                </div>
-            </div>
+        <div id="recorded-sequence-display">
+            <h2>Secuencia Grabada</h2>
+            <ul id="sequence-list">
+                <!-- Movements will be displayed here -->
+            </ul>
         </div>
     </div>
 

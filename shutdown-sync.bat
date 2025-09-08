@@ -1,8 +1,28 @@
 @echo off
-echo Guardando el estado del espacio de trabajo en GitHub...
+echo Sincronizando el espacio de trabajo con GitHub...
 cd /d F:\GEMINI-CLI
+
+REM Añade todos los cambios al staging area
 git add .
-git commit -m "Sync automatico: %date% %time%"
-git push origin main
+
+REM Revisa si hay cambios para commitear
+git diff-index --quiet HEAD --
+
+REM Si git diff-index encuentra cambios, su ERRORLEVEL es 1.
+if %errorlevel% neq 0 (
+    echo Cambios detectados. Creando commit...
+    git commit -m "Sync automatico: %date% %time%"
+    
+    REM Verifica si el commit fue exitoso antes de hacer push
+    if %errorlevel% equ 0 (
+        echo Empujando cambios a origin main...
+        git push origin main
+    ) else (
+        echo ERROR: El commit falló. No se hará push.
+    )
+) else (
+    echo No hay cambios para commitear.
+)
+
 echo.
-echo Guardado completado.
+echo Sincronización completada.

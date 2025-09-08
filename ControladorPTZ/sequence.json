@@ -1,32 +1,14 @@
 [
   {
-    "action": "panLeft",
-    "duration": 3184,
-    "speed": 0.5,
-    "pauseAfter": 0
+    "command": "right",
+    "duration": 3319,
+    "pauseBefore": 5402,
+    "recordedSpeedValue": 0.5
   },
   {
-    "action": "tiltUp",
-    "duration": 448,
-    "speed": 0.5,
-    "pauseAfter": 0
-  },
-  {
-    "action": "tiltDown",
-    "duration": 1176,
-    "speed": 0.5,
-    "pauseAfter": 0
-  },
-  {
-    "action": "panRight",
-    "duration": 4416,
-    "speed": 0.5,
-    "pauseAfter": 0
-  },
-  {
-    "action": "tiltDown",
-    "duration": 1560,
-    "speed": 0.5,
-    "pauseAfter": 0
+    "command": "left",
+    "duration": 5704,
+    "pauseBefore": 6673,
+    "recordedSpeedValue": 0.5
   }
 ]
