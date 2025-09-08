@@ -6,4 +6,3 @@ git commit -m "Sync automatico: %date% %time%"
 git push origin main
 echo.
 echo Guardado completado.
-pause

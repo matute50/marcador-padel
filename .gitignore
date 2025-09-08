@@ -3,4 +3,7 @@
 
 # Dependencias de proyectos
 **/node_modules/
-"*.log" 
+"*.log"
+
+# Proyectos anidados o independientes
+GeminiMemoriesRepo/
