@@ -1,0 +1,54 @@
+[
+  {
+    "command": "stop",
+    "time": 1428
+  },
+  {
+    "command": "left",
+    "time": 2261
+  },
+  {
+    "command": "stop",
+    "time": 4693
+  },
+  {
+    "command": "stop",
+    "time": 5292
+  },
+  {
+    "command": "right",
+    "time": 6165
+  },
+  {
+    "command": "stop",
+    "time": 12333
+  },
+  {
+    "command": "stop",
+    "time": 13012
+  },
+  {
+    "command": "left",
+    "time": 13732
+  },
+  {
+    "command": "stop",
+    "time": 15965
+  },
+  {
+    "command": "stop",
+    "time": 16340
+  },
+  {
+    "command": "down",
+    "time": 17221
+  },
+  {
+    "command": "stop",
+    "time": 19180
+  },
+  {
+    "command": "stop",
+    "time": 20084
+  }
+]

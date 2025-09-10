@@ -1,14 +1,8 @@
 [
   {
-    "command": "right",
-    "duration": 3319,
-    "pauseBefore": 5402,
-    "recordedSpeedValue": 0.5
-  },
-  {
     "command": "left",
-    "duration": 5704,
-    "pauseBefore": 6673,
+    "duration": 2481,
+    "pauseBefore": 4711,
     "recordedSpeedValue": 0.5
   }
 ]

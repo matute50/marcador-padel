@@ -7,35 +7,48 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="botones-container">
-        <div id="ptz-controls">
-            <button id="ptz-up" class="ptz-btn" data-direction="up">↑</button>
-            <button id="ptz-left" class="ptz-btn" data-direction="left">←</button>
-            <button id="ptz-home" class="ptz-btn">HOME</button>
-            <button id="ptz-right" class="ptz-btn" data-direction="right">→</button>
-            <button id="ptz-down" class="ptz-btn" data-direction="down">↓</button>
+    <div id="main-container">
+        <div id="controls-column">
+            <div id="ptz-controls">
+                <button id="ptz-up" class="ptz-btn" data-direction="up">↑</button>
+                <button id="ptz-left" class="ptz-btn" data-direction="left">←</button>
+                <button id="ptz-home" class="ptz-btn">HOME</button>
+                <button id="ptz-right" class="ptz-btn" data-direction="right">→</button>
+                <button id="ptz-down" class="ptz-btn" data-direction="down">↓</button>
+            </div>
+            <div id="zoom-controls">
+                <button id="zoom-out" class="ptz-btn zoom-btn" data-command="zoom-out">-</button>
+                <button id="zoom-in" class="ptz-btn zoom-btn" data-command="zoom-in">+</button>
+            </div>
         </div>
+        <div id="sequence-column">
+            <div id="sequence-container">
+                <h3>Gestión de Secuencias</h3>
+                
+                <div class="sequence-row">
+                    <select id="sequence-select"><option value="">Cargando...</option></select>
+                    <button id="load-sequence-btn">Cargar</button>
+                </div>
 
-        <div id="zoom-controls">
-            <button id="zoom-out" class="ptz-btn zoom-btn" data-command="zoom-out">-</button>
-            <button id="zoom-in" class="ptz-btn zoom-btn" data-command="zoom-in">+</button>
+                <div class="sequence-row">
+                    <input type="text" id="sequence-name" placeholder="Nombre de la secuencia...">
+                    <button id="save-sequence-btn">Guardar</button>
+                </div>
+
+                <hr>
+
+                <div class="sequence-row">
+                    <button id="record-toggle-btn">Grabar</button>
+                    <button id="play-sequence-btn">Reproducir</button>
+                </div>
+
+                <h4>Secuencia Activa: <span id="active-sequence-name"></span></h4>
+                <ul id="sequence-list">
+                    <!-- Los movimientos se añadirán aquí dinámicamente -->
+                </ul>
+            </div>
         </div>
     </div>
-
-    <div id="lista-container">
-        <div id="sequence-controls">
-            <button id="record-sequence-btn" class="action-btn">Grabar Secuencia</button>
-        <button id="play-sequence-btn" class="action-btn">Reproducir Secuencia</button>
-        </div>
-
-        <div id="recorded-sequence-display">
-            <h2>Secuencia Grabada</h2>
-            <ul id="sequence-list">
-                <!-- Movements will be displayed here -->
-            </ul>
-        </div>
-    </div>
-
     <script src="script.js"></script>
 </body>
 </html>
