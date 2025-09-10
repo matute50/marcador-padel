@@ -23,28 +23,26 @@
         </div>
         <div id="sequence-column">
             <div id="sequence-container">
-                <h3>Gestión de Secuencias</h3>
-                
-                <div class="sequence-row">
-                    <select id="sequence-select"><option value="">Cargando...</option></select>
-                    <button id="load-sequence-btn">Cargar</button>
-                </div>
+                <h3>Gestión de Posiciones</h3>
 
                 <div class="sequence-row">
-                    <input type="text" id="sequence-name" placeholder="Nombre de la secuencia...">
-                    <button id="save-sequence-btn">Guardar</button>
+                    <label for="pan-duration">Duración Paneo (ms):</label>
+                    <input type="number" id="pan-duration" value="5000">
                 </div>
 
                 <hr>
 
                 <div class="sequence-row">
-                    <button id="record-toggle-btn">Grabar</button>
+                    <button id="add-position-btn">Marcar Posición</button>
                     <button id="play-sequence-btn">Reproducir</button>
                 </div>
+                 <div class="sequence-row">
+                    <button id="clear-positions-btn" style="background-color: #c9302c;">Limpiar Posiciones</button>
+                </div>
 
-                <h4>Secuencia Activa: <span id="active-sequence-name"></span></h4>
+                <h4>Posiciones Marcadas:</h4>
                 <ul id="sequence-list">
-                    <!-- Los movimientos se añadirán aquí dinámicamente -->
+                    <!-- Las posiciones se añadirán aquí dinámicamente -->
                 </ul>
             </div>
         </div>

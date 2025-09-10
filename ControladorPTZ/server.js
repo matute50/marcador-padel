@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const axios = require('axios');
 const fs = require('fs').promises; // Usamos la versión de promesas de fs
+
+const { parseString } = require('xml2js');
 const app = express();
 const PORT = 3000;
 
@@ -41,18 +43,20 @@ const PTZ_COMMANDS = {
 };
 
 // --- Función Auxiliar para vMix ---
-const sendVmixCommand = async (functionName) => {
+const sendVmixCommand = async (functionName, inputKey = null) => {
     if (!functionName) {
         console.error('Intento de enviar un comando a vMix sin functionName.');
         return;
     }
     try {
-        const url = `${VMIX_API_URL}?Function=${functionName}&Input=1`;
+        // Si no se provee una key, se usa el Input 1 por defecto (cámara principal)
+        const input = inputKey || '1';
+        const url = `${VMIX_API_URL}?Function=${functionName}&Input=${input}`;
         console.log(`Enviando comando a vMix: ${url}`);
         await axios.get(url);
     } catch (error) {
         console.error(`Error al contactar la API de vMix: ${error.message}`);
-        // No se relanza el error para no detener el flujo principal en el backend
+        // No se relanza el error para no detener el flujo principal
     }
 };
 
@@ -148,6 +152,88 @@ app.post('/api/ptz', async (req, res) => {
 
     await sendVmixCommand(functionName);
     res.status(200).send({ message: `Comando '${command}' ejecutado.` });
+});
+
+// --- ENDPOINT PARA CREAR SNAPSHOTS (INPUTS VIRTUALES) ---
+app.post('/api/ptz/create-snapshot', async (req, res) => {
+    console.log('\nRecibida petición para crear un Snapshot (Input Virtual)...');
+    await sendVmixCommand('PTZCreateVirtualInput');
+    console.log('Comando PTZCreateVirtualInput enviado.');
+    // NOTA: Por ahora no devolvemos la clave del nuevo input. Lo haremos más adelante.
+    res.status(200).send({ message: 'Comando PTZCreateVirtualInput enviado.' });
+});
+
+// Devuelve la información del último input en la lista de vMix
+app.get('/api/ptz/last-created-input', async (req, res) => {
+    try {
+        const vmixResponse = await axios.get(VMIX_API_URL);
+        
+        parseString(vmixResponse.data, (err, result) => {
+            if (err) {
+                console.error("Error al parsear XML:", err);
+                return res.status(500).send({ message: 'Error al procesar la respuesta de vMix.' });
+            }
+
+            const allInputs = result.vmix.inputs[0].input;
+            if (!allInputs || allInputs.length === 0) {
+                return res.status(404).send({ message: 'No se encontraron inputs en vMix.' });
+            }
+
+            // Asumimos que el último input en la lista es el que acabamos de crear.
+            const lastInput = allInputs[allInputs.length - 1];
+
+            const info = {
+                key: lastInput.$.key,
+                title: lastInput.$.title,
+                number: parseInt(lastInput.$.number, 10)
+            };
+
+            console.log(`Último input detectado: ${info.title} (Key: ${info.key})`);
+            res.status(200).json(info);
+        });
+    } catch (error) {
+        console.error('Error al obtener el XML de vMix:', error.message);
+        res.status(500).send({ message: 'Error al contactar la API de vMix.' });
+    }
+});
+
+// Elimina una lista de inputs virtuales
+app.post('/api/ptz/remove-inputs', async (req, res) => {
+    const { keys } = req.body;
+    if (!keys || !Array.isArray(keys)) {
+        return res.status(400).send({ message: 'Se requiere un array de \'keys\'.' });
+    }
+
+    console.log(`Recibida petición para eliminar ${keys.length} inputs...`);
+    for (const key of keys) {
+        await sendVmixCommand('RemoveInput', key);
+        await new Promise(r => setTimeout(r, 50)); // Pequeña pausa entre comandos
+    }
+    console.log('Limpieza de inputs completada.');
+    res.status(200).send({ message: 'Inputs eliminados.' });
+});
+
+// Endpoint genérico para ejecutar funciones de vMix
+app.get('/api/ptz/function', async (req, res) => {
+    const { name, input, duration } = req.query;
+
+    if (!name || !input) {
+        return res.status(400).send({ message: 'Los parámetros "name" e "input" son requeridos.' });
+    }
+
+    let url = `${VMIX_API_URL}?Function=${name}&Input=${input}`;
+    if (duration) {
+        url += `&Duration=${duration}`;
+    }
+
+    try {
+        console.log(`Ejecutando función genérica: ${url}`);
+        await axios.get(url);
+        res.status(200).send({ message: 'Comando ejecutado.' });
+    } catch (error) {
+        console.error(`Error al ejecutar la función '${name}':`, error.message);
+        res.status(500).send({ message: 'Error al contactar la API de vMix.' });
+    }
 });
 
 app.listen(PORT, () => {

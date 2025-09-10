@@ -1,76 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Referencias a Elementos ---
-    const recordToggleBtn = document.getElementById('record-toggle-btn');
+    const addPositionBtn = document.getElementById('add-position-btn');
     const playSequenceBtn = document.getElementById('play-sequence-btn');
-    const saveSequenceBtn = document.getElementById('save-sequence-btn');
-    const loadSequenceBtn = document.getElementById('load-sequence-btn');
-    const sequenceSelect = document.getElementById('sequence-select');
-    const sequenceNameInput = document.getElementById('sequence-name');
-    const sequenceList = document.getElementById('sequence-list');
-    const activeSequenceNameSpan = document.getElementById('active-sequence-name');
+    const clearPositionsBtn = document.getElementById('clear-positions-btn');
+    const panDurationInput = document.getElementById('pan-duration');
+    const positionList = document.getElementById('sequence-list');
     const ptzButtons = document.querySelectorAll('.ptz-btn');
 
     // --- Variables de Estado ---
-    let isRecording = false;
+    let positions = []; // Almacenará la info de los inputs virtuales: { key, title, number }
     let isPlaying = false;
-    let sequenceStartTime = 0;
-    let localSequence = []; // Secuencia que se está grabando o que está cargada
-    let currentSequenceName = 'Nueva sin guardar';
-
-    // --- Traducciones ---
-    const commandTranslations = { 'up': 'Arriba', 'down': 'Abajo', 'left': 'Izquierda', 'right': 'Derecha', 'zoom-in': 'Zoom +', 'zoom-out': 'Zoom -', 'home': 'Home' };
 
     // --- Lógica de UI ---
-    const updateSequenceListView = () => {
-        sequenceList.innerHTML = '';
-        activeSequenceNameSpan.textContent = currentSequenceName;
-        if (localSequence.length < 1) return;
-
-        let summary = [];
-        let movementStart = null;
-        for (const event of localSequence) {
-            const isStopCommand = event.command.includes('stop');
-            if (!isStopCommand) {
-                if (movementStart) console.warn('Movimiento sin stop:', movementStart);
-                movementStart = event;
-            } else if (isStopCommand && movementStart) {
-                const duration = (event.time - movementStart.time) / 1000;
-                if (duration < 0.1) continue;
-                const translatedAction = commandTranslations[movementStart.command] || movementStart.command;
-                summary.push({ action: translatedAction, duration: duration.toFixed(1) });
-                movementStart = null;
-            }
-        }
-        summary.forEach(item => {
+    const updatePositionListView = () => {
+        positionList.innerHTML = '';
+        positions.forEach((pos, index) => {
             const li = document.createElement('li');
-            li.textContent = `${item.action} por ${item.duration}s`;
-            sequenceList.appendChild(li);
+            li.textContent = `Posición ${index + 1}`;
+            positionList.appendChild(li);
         });
     };
 
-    const loadSequenceList = async () => {
-        try {
-            const response = await fetch('/api/sequences');
-            const names = await response.json();
-            sequenceSelect.innerHTML = '<option value="">Elige una secuencia...</option>';
-            names.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                sequenceSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error cargando lista de secuencias:', error);
-            sequenceSelect.innerHTML = '<option value="">Error al cargar</option>';
-        }
+    const setControlsState = (disabled) => {
+        addPositionBtn.disabled = disabled;
+        clearPositionsBtn.disabled = disabled;
+        ptzButtons.forEach(b => b.disabled = disabled);
     };
 
-    // --- Lógica de Comandos PTZ ---
+    // --- Lógica de Comandos PTZ (Movimiento Manual) ---
     const sendPtzCommand = async (command) => {
-        if (isRecording) {
-            const time = Date.now() - sequenceStartTime;
-            localSequence.push({ command, time });
-        }
         try {
             await fetch('/api/ptz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command }) });
         } catch (error) {
@@ -78,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Handlers de Movimiento y Zoom ---
     ptzButtons.forEach(button => {
         const command = button.dataset.direction || button.dataset.command;
         if (!command) { // Botón Home
@@ -91,134 +48,112 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('mouseleave', () => sendPtzCommand(stopCommand));
     });
 
-    // --- BOTONES DE GESTIÓN DE SECUENCIAS ---
+    // --- Lógica Principal de la Aplicación ---
 
-    saveSequenceBtn.addEventListener('click', async () => {
-        const name = sequenceNameInput.value.trim();
-        if (!name) {
-            alert('Por favor, introduce un nombre para la secuencia.');
-            return;
-        }
-        if (localSequence.length === 0) {
-            alert('No hay nada grabado para guardar.');
-            return;
-        }
+    addPositionBtn.addEventListener('click', async () => {
+        addPositionBtn.disabled = true;
+        addPositionBtn.textContent = 'Marcando...';
         try {
-            await fetch(`/api/sequences/${name}`, {
+            await fetch('/api/ptz/create-snapshot', { method: 'POST' });
+            const response = await fetch('/api/ptz/last-created-input');
+            if (!response.ok) throw new Error('No se pudo obtener la información del nuevo input.');
+            const newPosition = await response.json();
+            positions.push(newPosition);
+            updatePositionListView();
+        } catch (error) {
+            console.error('Error al marcar la posición:', error);
+            alert('No se pudo marcar la posición.');
+        } finally {
+            addPositionBtn.disabled = false;
+            addPositionBtn.textContent = 'Marcar Posición';
+        }
+    });
+
+    clearPositionsBtn.addEventListener('click', async () => {
+        if (positions.length === 0) return;
+        const keysToRemove = positions.map(p => p.key);
+        
+        try {
+            await fetch('/api/ptz/remove-inputs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sequence: localSequence }),
+                body: JSON.stringify({ keys: keysToRemove })
             });
-            alert(`Secuencia '${name}' guardada.`);
-            currentSequenceName = name;
-            activeSequenceNameSpan.textContent = currentSequenceName;
-            loadSequenceList(); // Refrescar la lista de secuencias
+            positions = [];
+            updatePositionListView();
+            alert('Posiciones limpiadas.');
         } catch (error) {
-            console.error('Error al guardar:', error);
-            alert('Error al guardar la secuencia.');
+            console.error('Error al limpiar posiciones:', error);
+            alert('No se pudieron limpiar las posiciones en vMix.');
         }
     });
 
-    loadSequenceBtn.addEventListener('click', async () => {
-        const name = sequenceSelect.value;
-        if (!name) {
-            alert('Por favor, selecciona una secuencia para cargar.');
-            return;
-        }
-        try {
-            const response = await fetch(`/api/sequences/${name}`);
-            if (!response.ok) throw new Error('La secuencia no se pudo cargar del servidor.');
-            localSequence = await response.json();
-            currentSequenceName = name;
-            sequenceNameInput.value = name; // Poner el nombre en el input para facilitar sobre-escritura
-            updateSequenceListView();
-            alert(`Secuencia '${name}' cargada.`);
-        } catch (error) {
-            console.error('Error al cargar:', error);
-            alert('Error al cargar la secuencia.');
-        }
-    });
-
-    // --- BOTONES DE GRABACIÓN Y REPRODUCCIÓN ---
-
-    recordToggleBtn.addEventListener('click', async () => {
-        isRecording = !isRecording;
-        if (isRecording) {
-            // Iniciar Grabación
-            localSequence = [];
-            currentSequenceName = 'Nueva sin guardar';
-            updateSequenceListView();
-            await fetch('/api/sequence/start', { method: 'POST' }); // Le dice al server que mueva a home
-            sequenceStartTime = Date.now();
-            recordToggleBtn.textContent = 'Detener';
-            recordToggleBtn.classList.add('btn-active-red');
-            playSequenceBtn.disabled = true;
-            loadSequenceBtn.disabled = true;
-            saveSequenceBtn.disabled = true;
-        } else {
-            // Detener Grabación
-            recordToggleBtn.textContent = 'Grabar';
-            recordToggleBtn.classList.remove('btn-active-red');
-            playSequenceBtn.disabled = false;
-            loadSequenceBtn.disabled = false;
-            saveSequenceBtn.disabled = false;
-            updateSequenceListView(); // Muestra el resumen de lo grabado
-        }
-    });
-
-    playSequenceBtn.addEventListener('click', () => {
-        if (localSequence.length === 0) {
-            alert('No hay secuencia para reproducir.');
-            return;
-        }
-
-        isPlaying = !isPlaying;
-
+    playSequenceBtn.addEventListener('click', async () => {
         if (isPlaying) {
-            playSequenceBtn.textContent = 'Detener';
-            playSequenceBtn.classList.add('btn-active-red');
-            recordToggleBtn.disabled = true;
+            isPlaying = false;
+            playSequenceBtn.textContent = 'Deteniendo...';
+            playSequenceBtn.disabled = true;
+            return;
+        }
 
-            (async () => {
-                await sendPtzCommand('home');
-                await new Promise(r => setTimeout(r, 100));
+        if (positions.length < 1) {
+            return alert('Necesitas al menos 1 posición marcada para reproducir.');
+        }
 
-                if (localSequence.length > 0) {
-                    // Bucle de reproducción con estructura robusta para evitar race conditions
-                    for (let i = 0; i < localSequence.length; i++) {
-                        if (!isPlaying) break; // Salir si el usuario presiona Detener
-                        const { command, time } = localSequence[i];
-                        const delay = time - (i > 0 ? localSequence[i - 1].time : 0);
-                        
-                        await new Promise(resolve => {
-                            setTimeout(() => {
-                                if (isPlaying) { // Doble chequeo por si se detuvo durante el delay
-                                    sendPtzCommand(command);
-                                }
-                                resolve();
-                            }, delay);
-                        });
-                    }
+        isPlaying = true;
+        playSequenceBtn.textContent = 'Detener';
+        setControlsState(true);
+
+        const duration = panDurationInput.value;
+        let tempHomeSnapshot = null;
+
+        try {
+            // 1. Crear snapshot de Home
+            await sendPtzCommand('home');
+            await new Promise(r => setTimeout(r, 1000)); // Esperar que la cámara llegue a Home
+            await fetch('/api/ptz/create-snapshot', { method: 'POST' });
+            const homeResponse = await fetch('/api/ptz/last-created-input');
+            if (!homeResponse.ok) throw new Error('No se pudo crear el snapshot de Home.');
+            tempHomeSnapshot = await homeResponse.json();
+
+            // 2. Bucle de reproducción
+            let playlist = [tempHomeSnapshot, ...positions];
+            let currentIndex = 0;
+
+            while (isPlaying) {
+                const startPos = playlist[currentIndex];
+                const endPos = playlist[currentIndex + 1] || positions[0]; // Si es el último, vuelve al primero marcado
+                
+                // Cortar al punto de inicio del paneo
+                await fetch(`/api/ptz/function?name=Cut&input=${startPos.key}`);
+                await new Promise(r => setTimeout(r, 100)); // Pausa
+
+                // Iniciar paneo
+                await fetch(`/api/ptz/function?name=Merge&input=${endPos.key}&duration=${duration}`);
+                await new Promise(r => setTimeout(r, parseInt(duration, 10)));
+
+                currentIndex++;
+                if (currentIndex >= playlist.length) {
+                    currentIndex = 0; // Reiniciar para el bucle, empezando desde la Posición 1
+                    playlist = positions; // Las siguientes vueltas ya no incluyen Home
                 }
-
-                // Si la secuencia terminó naturalmente (no fue interrumpida), volver a Home
-                if (isPlaying) {
-                    await sendPtzCommand('home');
-                }
-
-                // Restaurar estado al finalizar o detener
-                isPlaying = false;
-                playSequenceBtn.textContent = 'Reproducir';
-                playSequenceBtn.classList.remove('btn-active-red');
-                recordToggleBtn.disabled = false;
-            })();
-        } else {
-            // Si se hace clic en "Detener", isPlaying se pone en false, el bucle lo detectará y parará.
-            // El resto de la limpieza se hace dentro del bucle async.
+            }
+        } catch (error) {
+            console.error('Error en la reproducción:', error);
+            alert('Ocurrió un error durante la reproducción.');
+        } finally {
+            // 3. Limpieza final
+            if (tempHomeSnapshot) {
+                await fetch('/api/ptz/remove-inputs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keys: [tempHomeSnapshot.key] })
+                });
+            }
+            isPlaying = false;
+            playSequenceBtn.textContent = 'Reproducir';
+            playSequenceBtn.disabled = false;
+            setControlsState(false);
         }
     });
-
-    // --- Inicialización al cargar la página ---
-    updateSequenceListView();
-    loadSequenceList();
 });
