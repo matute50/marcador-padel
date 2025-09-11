@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addPositionBtn.disabled = disabled;
         clearPositionsBtn.disabled = disabled;
         ptzButtons.forEach(b => b.disabled = disabled);
+        panDurationInput.disabled = disabled;
     };
 
     // --- Lógica de Comandos PTZ (Movimiento Manual) ---
@@ -48,16 +49,21 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('mouseleave', () => sendPtzCommand(stopCommand));
     });
 
+    // --- Lógica para crear Snapshot (reutilizada) ---
+    const createSnapshot = async () => {
+        await fetch('/api/ptz/create-snapshot', { method: 'POST' });
+        const response = await fetch('/api/ptz/last-created-input');
+        if (!response.ok) throw new Error('No se pudo obtener la información del nuevo input.');
+        return await response.json();
+    };
+
     // --- Lógica Principal de la Aplicación ---
 
     addPositionBtn.addEventListener('click', async () => {
         addPositionBtn.disabled = true;
         addPositionBtn.textContent = 'Marcando...';
         try {
-            await fetch('/api/ptz/create-snapshot', { method: 'POST' });
-            const response = await fetch('/api/ptz/last-created-input');
-            if (!response.ok) throw new Error('No se pudo obtener la información del nuevo input.');
-            const newPosition = await response.json();
+            const newPosition = await createSnapshot();
             positions.push(newPosition);
             updatePositionListView();
         } catch (error) {
@@ -104,45 +110,58 @@ document.addEventListener('DOMContentLoaded', () => {
         playSequenceBtn.textContent = 'Detener';
         setControlsState(true);
 
-        const duration = panDurationInput.value;
+        const durationInMs = parseFloat(panDurationInput.value) * 1000;
         let tempHomeSnapshot = null;
+        let currentPosition = null; // La posición actual de la cámara en el bucle
 
         try {
-            // 1. Crear snapshot de Home
+            // 1. Ir a Home y crear snapshot temporal de Home
             await sendPtzCommand('home');
             await new Promise(r => setTimeout(r, 1000)); // Esperar que la cámara llegue a Home
-            await fetch('/api/ptz/create-snapshot', { method: 'POST' });
-            const homeResponse = await fetch('/api/ptz/last-created-input');
-            if (!homeResponse.ok) throw new Error('No se pudo crear el snapshot de Home.');
-            tempHomeSnapshot = await homeResponse.json();
+            tempHomeSnapshot = await createSnapshot();
+            currentPosition = tempHomeSnapshot; // Empezamos desde Home
 
-            // 2. Bucle de reproducción
-            let playlist = [tempHomeSnapshot, ...positions];
-            let currentIndex = 0;
-
+            // Bucle de reproducción infinito
             while (isPlaying) {
-                const startPos = playlist[currentIndex];
-                const endPos = playlist[currentIndex + 1] || positions[0]; // Si es el último, vuelve al primero marcado
-                
-                // Cortar al punto de inicio del paneo
-                await fetch(`/api/ptz/function?name=Cut&input=${startPos.key}`);
-                await new Promise(r => setTimeout(r, 100)); // Pausa
+                // Panear desde Home a la primera posición marcada (solo la primera vez)
+                if (currentPosition === tempHomeSnapshot) {
+                    await fetch(`/api/ptz/function?name=PTZMoveToVirtualInputPosition&input=${positions[0].key}`);
+                    await new Promise(r => setTimeout(r, durationInMs + 1000)); // Esperar el movimiento
+                    currentPosition = positions[0]; // Actualizar posición actual
+                }
 
-                // Iniciar paneo
-                await fetch(`/api/ptz/function?name=Merge&input=${endPos.key}&duration=${duration}`);
-                await new Promise(r => setTimeout(r, parseInt(duration, 10)));
+                // Panear a través de las posiciones marcadas por el usuario
+                for (let i = 0; i < positions.length; i++) {
+                    if (!isPlaying) break; // Salir si se presiona Detener
+                    const nextPosition = positions[i];
 
-                currentIndex++;
-                if (currentIndex >= playlist.length) {
-                    currentIndex = 0; // Reiniciar para el bucle, empezando desde la Posición 1
-                    playlist = positions; // Las siguientes vueltas ya no incluyen Home
+                    // Si ya estamos en la posición, saltar el movimiento (ej. al inicio del bucle)
+                    if (currentPosition.key === nextPosition.key) {
+                        // console.log(`Ya en ${nextPosition.title}, saltando movimiento.`);
+                        continue;
+                    }
+
+                    await fetch(`/api/ptz/function?name=PTZMoveToVirtualInputPosition&input=${nextPosition.key}`);
+                    await new Promise(r => setTimeout(r, durationInMs + 1000)); // Esperar el movimiento
+                    currentPosition = nextPosition; // Actualizar posición actual
+                }
+
+                // Si el bucle se detuvo, salir del while
+                if (!isPlaying) break;
+
+                // Panear desde la última posición marcada de vuelta a la primera para cerrar el bucle
+                if (positions.length > 1) { // Solo si hay más de una posición para buclear
+                    await fetch(`/api/ptz/function?name=PTZMoveToVirtualInputPosition&input=${positions[0].key}`);
+                    await new Promise(r => setTimeout(r, durationInMs + 1000)); // Esperar el movimiento
+                    currentPosition = positions[0]; // Actualizar posición actual
                 }
             }
+
         } catch (error) {
             console.error('Error en la reproducción:', error);
-            alert('Ocurrió un error durante la reproducción.');
+            alert('Ocurrió un error durante la reproducción. Revisa la consola del servidor.');
         } finally {
-            // 3. Limpieza final
+            // Limpieza final y restauración de UI
             if (tempHomeSnapshot) {
                 await fetch('/api/ptz/remove-inputs', {
                     method: 'POST',
