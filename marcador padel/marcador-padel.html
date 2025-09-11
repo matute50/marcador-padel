@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcador de Pádel (Layout Ancho)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&display=swap');
+
+        body { font-family: 'Roboto', sans-serif; background-color: #000000; color: #333; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; margin: 0; padding: 0; }
+        .contenedor-principal { display: flex; justify-content: space-between; align-items: flex-start; width: 100vw; height: 100vh; padding: 20px; box-sizing: border-box; gap: 20px; }
+        .columna-marcadores { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+        /* --- MARCADOR VISUAL PRINCIPAL --- */
+        #marcador-visual { background: linear-gradient(45deg, #001219, #002a3d, #003f5c, #01497c); color: #ffffff; padding: 10px 20px; border-radius: 15px; width: 900px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); border: 2px solid #005f73; position: relative; overflow: hidden; }
+        #header-marcador { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: #fca311; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+        #tiempo-de-juego { font-size: 15px; }
+        .fila-equipo { display: flex; align-items: center; justify-content: space-between; font-weight: 700; margin: 4px 0; }
+        .nombres-jugadores { flex-grow: 1; font-size: 30px; letter-spacing: 1px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+        .puntuacion { display: flex; align-items: center; }
+        .sets { display: flex; font-size: 38px; font-weight: 900; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); }
+        .set { width: 55px; text-align: center; }
+        .juego-actual { font-size: 44px; font-weight: 900; width: 90px; text-align: center; background-color: #ffffff; color: #013a63; border-radius: 8px; margin-left: 15px; padding: 5px 0; }
+        .indicador-saque { width: 15px; height: 15px; background-color: #fca311; border-radius: 50%; margin-right: 15px; transition: opacity 0.3s ease; opacity: 0; }
+        .indicador-saque.activo { opacity: 1; }
+        #tie-break-aviso { 
+            position: absolute; 
+            top: 50%; 
+            right: 310px; /* Posición re-centrada */
+            transform: translateY(-50%); 
+            background-color: #d62828; 
+            color: #fff; 
+            padding: 9px 17px; /* Tamaño aumentado 15% */
+            border-radius: 10px; 
+            font-size: 23px; /* Tamaño aumentado 15% */
+            font-weight: 900; 
+            text-transform: uppercase; 
+            display: none; 
+            z-index: 10; 
+            box-shadow: 0 0 20px rgba(214, 40, 40, 0.7); 
+        }
+
+        /* --- MARCADOR COMPACTO --- */
+        #marcador-compacto { background: linear-gradient(45deg, #001219, #002a3d, #003f5c, #01497c); color: #ffffff; padding: 5px 10px; border-radius: 10px; width: 500px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); border: 1px solid #005f73; }
+        .fila-equipo-compacto { display: flex; align-items: center; justify-content: space-between; font-weight: 700; margin: 2px 0; }
+        .nombres-jugadores-compacto { flex-grow: 1; font-size: 20px; letter-spacing: 0.5px; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); }
+        .puntuacion-compacto { display: flex; align-items: center; }
+        .sets-compacto { display: flex; font-size: 24px; font-weight: 900; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); }
+        .set-compacto { width: 35px; text-align: center; }
+        .juego-actual-compacto { font-size: 28px; font-weight: 900; width: 55px; text-align: center; background-color: #ffffff; color: #013a63; border-radius: 5px; margin-left: 8px; padding: 2px 0; }
+        .indicador-saque-compacto { width: 10px; height: 10px; background-color: #fca311; border-radius: 50%; margin-right: 10px; transition: opacity 0.3s ease; opacity: 0; }
+        .indicador-saque-compacto.activo { opacity: 1; }
+
+        /* --- INDICADORES DE PUNTOS CLAVE --- */
+        #indicadores-clave { width: 500px; margin: 5px auto 0; display: flex; justify-content: flex-start; gap: 15px; padding-left: 30px; box-sizing: border-box; }
+        .indicador-punto-clave { display: none; font-size: 18px; font-weight: 900; text-transform: uppercase; background-color: black; padding: 5px 10px; border-radius: 5px; }
+        .indicador-punto-clave.visible { display: block; }
+        #break-point-indicator, #set-point-indicator, #match-point-indicator { color: #fca311; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); }
+        #tie-break-indicator {
+            color: #fff;
+            background-color: #d62828;
+            padding: 4px 12px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(214, 40, 40, 0.6);
+        }
+
+        /* --- PANEL DE CONTROL --- */
+        #panel-control { padding: 20px; background: #fff; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); display: flex; gap: 20px; align-items: flex-start; }
+        .panel-columna { display: flex; flex-direction: column; gap: 10px; }
+        .panel-columna.forms { width: 300px; }
+        .panel-columna.botones { width: 450px; }
+        h2 { text-align: center; margin-top: 0; color: #013a63; margin-bottom: 10px; grid-column: 1 / -1; }
+        h3 { color: #014f86; font-size: 0.9em; height: 30px; display: flex; align-items: center; justify-content: center; padding: 0 5px; margin: 0; }
+        .saque-activo-control { text-decoration: underline; text-decoration-color: #fca311; text-decoration-thickness: 3px; }
+        .controles-equipos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .columna-control-equipo { display: flex; flex-direction: column; gap: 8px; }
+        .botones-puntos { display: flex; gap: 8px; }
+        .btn-control { padding: 10px; font-size: 14px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; color: white; }
+        .btn-punto { background-color: #2a9d8f; flex-grow: 3; }
+        .btn-punto:hover { background-color: #268a7e; }
+        .btn-quitar-punto { background-color: #e76f51; flex-grow: 1; }
+        .btn-quitar-punto:hover { background-color: #d9644a; }
+        .btn-juego, .btn-quitar-juego { background-color: #007bff; padding: 5px; font-size: 12px; }
+        .btn-juego:hover, .btn-quitar-juego:hover { background-color: #0069d9; }
+        .btn-set { background-color: #00b4d8; flex-grow: 3; }
+        .btn-set:hover { background-color: #009ac4; }
+        .btn-quitar-set { background-color: #f77f00; flex-grow: 1; }
+        .btn-quitar-set:hover { background-color: #e07100; }
+        .controles-generales { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-general { background-color: #fca311; color: #000; }
+        .btn-general:hover { background-color: #e8960c; }
+        .btn-reset { background-color: #d62828; }
+        .btn-reset:hover { background-color: #c02424; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+        .input-group label { font-weight: 700; color: #555; font-size: 0.9em; }
+        .input-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+
+    </style>
+</head>
+<body>
+
+<div class="contenedor-principal">
+
+    <div id="panel-control">
+        <div class="panel-columna forms">
+            <h2>Configuración</h2>
+            <div class="input-group">
+                <label for="torneo-input">Instancia del Torneo:</label>
+                <input type="text" id="torneo-input" value="">
+            </div>
+            <div class="input-group">
+                <label for="nombres-input-eq1">Nombres Equipo 1:</label>
+                <input type="text" id="nombres-input-eq1" value="JUGADOR 1 - JUGADOR 2">
+            </div>
+            <div class="input-group">
+                <label for="nombres-input-eq2">Nombres Equipo 2:</label>
+                <input type="text" id="nombres-input-eq2" value="JUGADOR 3 - JUGADOR 4">
+            </div>
+        </div>
+        <div class="panel-columna botones">
+            <h2>Acciones</h2>
+            <div class="controles-equipos">
+                <div class="columna-control-equipo">
+                    <h3 id="control-titulo-eq1">JUGADOR 1 - JUGADOR 2</h3>
+                    <div class="botones-puntos">
+                        <button class="btn-control btn-punto" onclick="darPunto(1)">+1 Punto</button>
+                        <button class="btn-control btn-quitar-punto" onclick="quitarPunto(1)">-1</button>
+                    </div>
+                    <div class="botones-juegos" style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="btn-control btn-juego" onclick="sumarJuego(1)">+1 Juego</button>
+                        <button class="btn-control btn-quitar-juego" onclick="restarJuego(1)">-1 Juego</button>
+                    </div>
+                    
+                </div>
+                <div class="columna-control-equipo">
+                    <h3 id="control-titulo-eq2">JUGADOR 3 - JUGADOR 4</h3>
+                    <div class="botones-puntos">
+                        <button class="btn-control btn-punto" onclick="darPunto(2)">+1 Punto</button>
+                        <button class="btn-control btn-quitar-punto" onclick="quitarPunto(2)">-1</button>
+                    </div>
+                    <div class="botones-juegos" style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="btn-control btn-juego" onclick="sumarJuego(2)">+1 Juego</button>
+                        <button class="btn-control btn-quitar-juego" onclick="restarJuego(2)">-1 Juego</button>
+                    </div>
+                    
+                </div>
+            </div>
+            <div class="controles-generales">
+                <button class="btn-control btn-general" onclick="iniciarReloj()">Iniciar Reloj</button>
+                <button class="btn-control btn-general" onclick="resetReloj()">Reset Reloj</button>
+                <button class="btn-control btn-general" onclick="cambiarSaque()">Cambiar Saque</button>
+                
+                <button class="btn-control btn-reset" onclick="resetearPartido()">Reset Partido</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="columna-marcadores">
+        <div id="marcador-visual"></div>
+        <div id="marcador-compacto-wrapper" style="position: relative;">
+            <div id="marcador-compacto"></div>
+        </div>
+        <div id="indicadores-clave">
+            <div class="indicador-punto-clave" id="tie-break-indicator">Tie-Break</div>
+            <div class="indicador-punto-clave" id="break-point-indicator">Break Point</div>
+            <div class="indicador-punto-clave" id="set-point-indicator">Set Point</div>
+            <div class="indicador-punto-clave" id="match-point-indicator">Match Point</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const LOCAL_STORAGE_KEY = 'marcadorPadelState';
+
+    // --- ESTADO DEL JUEGO ---
+    let estado = {};
+
+    function initState() {
+        return {
+            eq1: { sets: [0, 0, 0], juego: '0' },
+            eq2: { sets: [0, 0, 0], juego: '0' },
+            setActual: 0,
+            saque: 1,
+            inTieBreak: false,
+            partidoTerminado: false,
+            nombres: { eq1: 'JUGADOR 1 - JUGADOR 2', eq2: 'JUGADOR 3 - JUGADOR 4' },
+            torneo: '',
+            puntoClave: null
+        };
+    }
+
+    // --- ESTADO DEL RELOJ ---
+    let timerInterval = null;
+    let elapsedTimeOnPause = 0;
+    let timerRunning = false;
+    let isEditing = false;
+
+    const puntosSecuencia = ['0', '15', '30', '40', 'A'];
+
+    // --- DOM REFERENCES ---
+    const dom = {
+        marcadorVisual: document.getElementById('marcador-visual'),
+        marcadorCompacto: document.getElementById('marcador-compacto'),
+        titulosControl: { eq1: document.getElementById('control-titulo-eq1'), eq2: document.getElementById('control-titulo-eq2') },
+        inputs: { torneo: document.getElementById('torneo-input'), eq1: document.getElementById('nombres-input-eq1'), eq2: document.getElementById('nombres-input-eq2') },
+        indicadores: {
+            tieBreak: document.getElementById('tie-break-indicator'),
+            break: document.getElementById('break-point-indicator'),
+            set: document.getElementById('set-point-indicator'),
+            match: document.getElementById('match-point-indicator')
+        }
+    };
+
+    // --- LÓGICA DE GUARDADO Y RESTAURACIÓN ---
+    function guardarEstadoCompleto() {
+        const estadoParaGuardar = { partido: estado, reloj: { running: timerRunning, elapsed: elapsedTimeOnPause } };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(estadoParaGuardar));
+    }
+
+    function cargarEstado() {
+        const estadoGuardado = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (estadoGuardado) {
+            if (confirm("Se encontró un partido guardado. ¿Deseas restaurarlo?")) {
+                const datos = JSON.parse(estadoGuardado);
+                estado = datos.partido;
+                elapsedTimeOnPause = datos.reloj.elapsed;
+                dom.inputs.torneo.value = estado.torneo;
+                dom.inputs.eq1.value = estado.nombres.eq1;
+                dom.inputs.eq2.value = estado.nombres.eq2;
+                if (datos.reloj.running && !estado.partidoTerminado) { iniciarReloj(); }
+                actualizarUI();
+            }
+        }
+    }
+
+    // --- LÓGICA DE ACCIONES DE CONTROL ---
+    function iniciarReloj() {
+        if (timerRunning || estado.partidoTerminado) return;
+        timerRunning = true;
+        startTime = Date.now() - elapsedTimeOnPause;
+        timerInterval = setInterval(actualizarReloj, 1000);
+        guardarEstadoCompleto();
+    }
+
+    function resetReloj() {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        elapsedTimeOnPause = 0;
+        if(dom.reloj) dom.reloj.textContent = "00:00:00";
+        guardarEstadoCompleto();
+    }
+
+    function cambiarSaque() {
+        if (estado.partidoTerminado) return;
+        estado.saque = estado.saque === 1 ? 2 : 1;
+        actualizarUI();
+    }
+
+    function actualizarReloj() {
+        elapsedTimeOnPause = Date.now() - startTime;
+        const totalSeconds = Math.floor(elapsedTimeOnPause / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const format = (num) => String(num).padStart(2, '0');
+        if(dom.reloj) dom.reloj.textContent = `${format(hours)}:${format(minutes)}:${format(seconds)}`;
+    }
+
+    // --- LÓGICA DE PUNTUACIÓN ---
+    function darPunto(equipo) {
+        if (!timerRunning) {
+            iniciarReloj();
+        }
+        if (estado.partidoTerminado) return;
+        if (estado.inTieBreak) { darPuntoTieBreak(equipo); }
+        else { darPuntoNormal(equipo); }
+        checkSpecialPoints();
+        actualizarUI();
+    }
+    
+    function quitarPunto(equipo) {
+        if (estado.partidoTerminado) return;
+        const eq = `eq${equipo}`;
+        if (estado.inTieBreak) {
+            if (estado[eq].juego > 0) estado[eq].juego--;
+        } else {
+            const p1Score = estado[eq].juego;
+            if (p1Score === 'A') estado[eq].juego = '40';
+            else {
+                const idx = puntosSecuencia.indexOf(p1Score);
+                if (idx > 0) estado[eq].juego = puntosSecuencia[idx - 1];
+            }
+        }
+        checkSpecialPoints();
+        actualizarUI();
+    }
+
+    function sumarJuego(equipo) {
+        if (estado.partidoTerminado) return;
+        const eq = `eq${equipo}`;
+        const rival = `eq${equipo === 1 ? 2 : 1}`;
+        estado[eq].sets[estado.setActual]++;
+        
+        const juegosEq = estado[eq].sets[estado.setActual];
+        const juegosRival = estado[rival].sets[estado.setActual];
+
+        if (juegosEq >= 6 && (juegosEq - juegosRival) >= 2) {
+            ganarSet(equipo);
+        }
+
+        checkSpecialPoints();
+        actualizarUI();
+    }
+
+    function restarJuego(equipo) {
+        if (estado.partidoTerminado) return;
+        const eq = `eq${equipo}`;
+        if (estado[eq].sets[estado.setActual] > 0) {
+            estado[eq].sets[estado.setActual]--;
+        }
+        checkSpecialPoints();
+        actualizarUI();
+    }
+
+    
+
+    
+
+    function editName(equipo, event) {
+        if (isEditing) return;
+        isEditing = true;
+        const eq = `eq${equipo}`;
+        const nameContainer = event.target;
+        const currentName = estado.nombres[eq];
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentName;
+        input.style.width = '100%';
+        input.style.background = 'transparent';
+        input.style.border = 'none';
+        input.style.color = 'white';
+        if (nameContainer.classList.contains('nombres-jugadores-compacto')) {
+            input.style.fontSize = '20px';
+        } else {
+            input.style.fontSize = '30px';
+        }
+        input.style.textAlign = 'left';
+
+        nameContainer.innerHTML = '';
+        nameContainer.appendChild(input);
+        input.focus();
+
+        const saveName = () => {
+            estado.nombres[eq] = input.value;
+            dom.inputs[eq].value = input.value;
+            isEditing = false;
+            actualizarUI();
+        };
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveName();
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            saveName();
+        });
+    }
+
+    function editTournamentName(event) {
+        if (isEditing) return;
+        isEditing = true;
+        const tournamentContainer = event.target;
+        const currentTournamentName = estado.torneo;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentTournamentName;
+        input.style.width = '100%';
+        input.style.background = 'transparent';
+        input.style.border = 'none';
+        input.style.color = '#fca311';
+        input.style.fontSize = '20px';
+        input.style.fontWeight = '700';
+        input.style.textTransform = 'uppercase';
+        input.style.letterSpacing = '1px';
+        input.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.5)';
+
+        tournamentContainer.innerHTML = '';
+        tournamentContainer.appendChild(input);
+        input.focus();
+
+        const saveTournamentName = () => {
+            estado.torneo = input.value;
+            dom.inputs.torneo.value = input.value;
+            isEditing = false;
+            actualizarUI();
+        };
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveTournamentName();
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            saveTournamentName();
+        });
+    }
+
+    function darPuntoNormal(equipo) {
+        const eq = `eq${equipo}`;
+        const rival = `eq${equipo === 1 ? 2 : 1}`;
+        const p1Score = estado[eq].juego;
+        const p2Score = estado[rival].juego;
+
+        if (p1Score === 'A') { ganarJuego(equipo); }
+        else if (p2Score === 'A') { estado[rival].juego = '40'; }
+        else if (p1Score === '40' && p2Score === '40') { estado[eq].juego = 'A'; }
+        else if (p1Score === '40') { ganarJuego(equipo); }
+        else { estado[eq].juego = puntosSecuencia[puntosSecuencia.indexOf(p1Score) + 1]; }
+    }
+
+    function darPuntoTieBreak(equipo) {
+        const eq = `eq${equipo}`;
+        estado[eq].juego++;
+        if (estado[eq].juego >= 7 && (estado[eq].juego - estado[`eq${equipo === 1 ? 2 : 1}`].juego) >= 2) { ganarJuego(equipo); }
+    }
+
+    function ganarJuego(equipo) {
+        const eq = `eq${equipo}`;
+        const rival = `eq${equipo === 1 ? 2 : 1}`;
+        estado[eq].sets[estado.setActual]++;
+        const juegosEq = estado[eq].sets[estado.setActual];
+        const juegosRival = estado[rival].sets[estado.setActual];
+
+        if (estado.inTieBreak) { estado.inTieBreak = false; ganarSet(equipo); }
+        else if (juegosEq === 6 && juegosRival === 6) { estado.inTieBreak = true; }
+        else if ((juegosEq >= 6 && (juegosEq - juegosRival) >= 2)) { ganarSet(equipo); }
+        estado.eq1.juego = '0';
+        estado.eq2.juego = '0';
+        cambiarSaque();
+    }
+
+    function ganarSet(equipo) {
+        let setsGanadosEq1 = 0, setsGanadosEq2 = 0;
+        for (let j = 0; j <= estado.setActual; j++) {
+            if (estado.eq1.sets[j] > estado.eq2.sets[j]) setsGanadosEq1++;
+            else if (estado.eq2.sets[j] > estado.eq1.sets[j]) setsGanadosEq2++;
+        }
+
+        if (setsGanadosEq1 === 2 || setsGanadosEq2 === 2) {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            estado.partidoTerminado = true;
+        } else {
+            estado.setActual++;
+        }
+    }
+
+    function resetearPartido() {
+        if (confirm('¿Estás seguro de que quieres resetear todo el partido? Esto borrará el estado guardado.')) {
+            estado = initState();
+            resetReloj();
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            dom.inputs.torneo.value = estado.torneo;
+            dom.inputs.eq1.value = estado.nombres.eq1;
+            dom.inputs.eq2.value = estado.nombres.eq2;
+            actualizarUI();
+        }
+    }
+
+    function checkSpecialPoints() {
+        estado.puntoClave = null;
+        if (estado.partidoTerminado) return;
+        const setsParaGanar = 2;
+
+        let setsGanadosEq1 = 0;
+        let setsGanadosEq2 = 0;
+        for (let j = 0; j < estado.setActual; j++) {
+            if (estado.eq1.sets[j] > estado.eq2.sets[j]) setsGanadosEq1++;
+            else if (estado.eq2.sets[j] > estado.eq1.sets[j]) setsGanadosEq2++;
+        }
+
+        for (let i = 1; i <= 2; i++) {
+            const eq = `eq${i}`;
+            const rival = `eq${i === 1 ? 2 : 1}`;
+            let tienePuntoDeGane = false;
+            if (estado.inTieBreak) {
+                const puntosEq = estado[eq].juego;
+                const puntosRival = estado[rival].juego;
+                if (puntosEq >= 6 && puntosEq > puntosRival) { tienePuntoDeGane = true; }
+            } else {
+                const scoreEq = estado[eq].juego;
+                const scoreRival = estado[rival].juego;
+                if (scoreEq === 'A' || (scoreEq === '40' && puntosSecuencia.indexOf(scoreRival) < 3)) { tienePuntoDeGane = true; }
+            }
+
+            if (!tienePuntoDeGane) continue;
+
+            const juegosEq = estado[eq].sets[estado.setActual];
+            const juegosRival = estado[rival].sets[estado.setActual];
+            let ganariaElSet = false;
+            if (estado.inTieBreak) { ganariaElSet = true; }
+            else { const juegosDespuesDeGanar = juegosEq + 1; if (juegosDespuesDeGanar >= 6 && (juegosDespuesDeGanar - juegosRival) >= 2) { ganariaElSet = true; } }
+
+            if (ganariaElSet) {
+                const setsGanados = (i === 1) ? setsGanadosEq1 : setsGanadosEq2;
+                if (setsGanados === setsParaGanar - 1) { estado.puntoClave = 'match'; return; }
+                else { estado.puntoClave = 'set'; }
+            }
+        }
+
+        if (estado.puntoClave) return;
+
+        const restador = `eq${estado.saque === 1 ? 2 : 1}`;
+        const scoreRestador = estado[restador].juego;
+        const scoreSacador = estado[`eq${estado.saque}`].juego;
+        if (!estado.inTieBreak && (scoreRestador === 'A' || (scoreRestador === '40' && puntosSecuencia.indexOf(scoreSacador) < 3))) {
+            estado.puntoClave = 'break';
+        }
+    }
+
+    function renderizarMarcadores() {
+        dom.marcadorVisual.innerHTML = `
+            <div id="header-marcador">
+                <div id="info-torneo" onclick="editTournamentName(event)">${estado.torneo}</div>
+                <div id="tiempo-de-juego">Tiempo de juego: <span id="tiempo-de-juego-display">00:00:00</span></div>
+            </div>
+            <div class="fila-equipo">
+                <div class="indicador-saque ${estado.saque === 1 ? 'activo' : ''}"></div>
+                <div class="nombres-jugadores" onclick="editName(1, event)">${estado.nombres.eq1}</div>
+                <div class="puntuacion">
+                    <div class="sets"><div class="set">${estado.eq1.sets[0]}</div><div class="set">${estado.eq1.sets[1]}</div><div class="set">${estado.eq1.sets[2]}</div></div>
+                    <div class="juego-actual">${estado.eq1.juego}</div>
+                </div>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 2px 0;">
+            <div class="fila-equipo">
+                <div class="indicador-saque ${estado.saque === 2 ? 'activo' : ''}"></div>
+                <div class="nombres-jugadores" onclick="editName(2, event)">${estado.nombres.eq2}</div>
+                <div class="puntuacion">
+                    <div class="sets"><div class="set">${estado.eq2.sets[0]}</div><div class="set">${estado.eq2.sets[1]}</div><div class="set">${estado.eq2.sets[2]}</div></div>
+                    <div class="juego-actual">${estado.eq2.juego}</div>
+                </div>
+            </div>
+            <div id="tie-break-aviso" style="display: ${estado.inTieBreak ? 'block' : 'none'};">TIE-BREAK</div>
+        `;
+        dom.reloj = document.getElementById('tiempo-de-juego-display');
+
+        dom.marcadorCompacto.innerHTML = `
+            <div class="fila-equipo-compacto">
+                <div class="indicador-saque-compacto ${estado.saque === 1 ? 'activo' : ''}"></div>
+                <div class="nombres-jugadores-compacto" onclick="editName(1, event)">${estado.nombres.eq1}</div>
+                <div class="puntuacion-compacto">
+                    <div class="sets-compacto"><div class="set-compacto">${estado.eq1.sets[0]}</div><div class="set-compacto">${estado.eq1.sets[1]}</div><div class="set-compacto">${estado.eq1.sets[2]}</div></div>
+                    <div class="juego-actual-compacto">${estado.eq1.juego}</div>
+                </div>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 1px 0;">
+            <div class="fila-equipo-compacto">
+                <div class="indicador-saque-compacto ${estado.saque === 2 ? 'activo' : ''}"></div>
+                <div class="nombres-jugadores-compacto" onclick="editName(2, event)">${estado.nombres.eq2}</div>
+                <div class="puntuacion-compacto">
+                    <div class="sets-compacto"><div class="set-compacto">${estado.eq2.sets[0]}</div><div class="set-compacto">${estado.eq2.sets[1]}</div><div class="set-compacto">${estado.eq2.sets[2]}</div></div>
+                    <div class="juego-actual-compacto">${estado.eq2.juego}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function actualizarUI() {
+        if (isEditing) return;
+        estado.torneo = dom.inputs.torneo.value;
+        estado.nombres.eq1 = dom.inputs.eq1.value;
+        estado.nombres.eq2 = dom.inputs.eq2.value;
+
+        renderizarMarcadores();
+
+        dom.titulosControl.eq1.textContent = estado.nombres.eq1 || 'Equipo 1';
+        dom.titulosControl.eq2.textContent = estado.nombres.eq2 || 'Equipo 2';
+        dom.titulosControl.eq1.classList.toggle('saque-activo-control', estado.saque === 1);
+        dom.titulosControl.eq2.classList.toggle('saque-activo-control', estado.saque === 2);
+
+        // Lógica de visibilidad de indicadores
+        dom.indicadores.tieBreak.classList.toggle('visible', estado.inTieBreak);
+        dom.indicadores.break.classList.toggle('visible', !estado.inTieBreak && estado.puntoClave === 'break');
+        dom.indicadores.set.classList.toggle('visible', estado.puntoClave === 'set');
+        dom.indicadores.match.classList.toggle('visible', estado.puntoClave === 'match');
+        
+        guardarEstadoCompleto();
+    }
+
+    // --- EVENT LISTENERS ---
+    dom.inputs.torneo.addEventListener('input', actualizarUI);
+    dom.inputs.eq1.addEventListener('input', actualizarUI);
+    dom.inputs.eq2.addEventListener('input', actualizarUI);
+
+    // --- INICIALIZACIÓN ---
+    window.onload = () => {
+        estado = initState();
+        cargarEstado();
+        actualizarUI();
+    };
+
+</script>
+</body>
+</html>
