@@ -55,7 +55,18 @@
         #indicadores-clave { width: 500px; margin: 5px auto 0; display: flex; justify-content: flex-start; gap: 15px; padding-left: 30px; box-sizing: border-box; }
         .indicador-punto-clave { display: none; font-size: 18px; font-weight: 900; text-transform: uppercase; background-color: black; padding: 5px 10px; border-radius: 5px; }
         .indicador-punto-clave.visible { display: block; }
+                /* --- INDICADORES DE PUNTOS CLAVE --- */
+        #indicadores-clave { width: 500px; margin: 5px auto 0; display: flex; justify-content: flex-start; gap: 15px; padding-left: 30px; box-sizing: border-box; }
+        .indicador-punto-clave { display: none; font-size: 18px; font-weight: 900; text-transform: uppercase; background-color: black; padding: 5px 10px; border-radius: 5px; }
+        .indicador-punto-clave.visible { display: block; }
         #break-point-indicator, #set-point-indicator, #match-point-indicator { color: #fca311; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); }
+        #tie-break-indicator {
+            color: #fff;
+            background-color: #d62828;
+            padding: 4px 12px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(214, 40, 40, 0.6);
+        }
         #tie-break-indicator {
             color: #fff;
             background-color: #d62828;
@@ -579,6 +590,11 @@
         estado.nombres.eq2 = dom.inputs.eq2.value;
 
         renderizarMarcadores();
+
+        // Si el reloj está detenido pero tiene tiempo, actualiza la visualización del reloj
+        if (!timerRunning && elapsedTimeOnPause > 0) {
+            actualizarReloj();
+        }
 
         dom.titulosControl.eq1.textContent = estado.nombres.eq1 || 'Equipo 1';
         dom.titulosControl.eq2.textContent = estado.nombres.eq2 || 'Equipo 2';
