@@ -8,7 +8,7 @@
 </head>
 <body>
     <div id="main-container">
-        <div id="controls-column">
+        <div id="ptz-column">
             <div id="ptz-controls">
                 <button id="ptz-up" class="ptz-btn" data-direction="up">↑</button>
                 <button id="ptz-left" class="ptz-btn" data-direction="left">←</button>
@@ -21,29 +21,18 @@
                 <button id="zoom-in" class="ptz-btn zoom-btn" data-command="zoom-in">+</button>
             </div>
         </div>
-        <div id="sequence-column">
-            <div id="sequence-container">
-                <h3>Gestión de Posiciones</h3>
-
-                <div class="sequence-row">
-                    <label for="pan-duration">Duración Paneo (s):</label>
-                    <input type="number" id="pan-duration" value="5">
+        <div id="macro-column">
+            <div id="macro-controls">
+                <h3>Grabación de Secuencia</h3>
+                
+                <div class="macro-row">
+                    <button id="record-btn">Grabar</button>
+                    <button id="play-btn">Reproducir</button>
+                    <button id="stop-btn" style="background-color: #c9302c;">Detener</button>
                 </div>
-
-                <hr>
-
-                <div class="sequence-row">
-                    <button id="add-position-btn">Marcar Posición</button>
-                    <button id="play-sequence-btn">Reproducir</button>
-                </div>
-                 <div class="sequence-row">
-                    <button id="clear-positions-btn" style="background-color: #c9302c;">Limpiar Posiciones</button>
-                </div>
-
-                <h4>Posiciones Marcadas:</h4>
-                <ul id="sequence-list">
-                    <!-- Las posiciones se añadirán aquí dinámicamente -->
-                </ul>
+                <div id="status-indicator">STANDBY</div>
+                <h4>Secuencia Grabada:</h4>
+                <ul id="recorded-sequence-list"></ul>
             </div>
         </div>
     </div>
