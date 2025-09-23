@@ -12,13 +12,15 @@ El objetivo de este proyecto es crear un sistema que automatice la publicación 
 
 - **Entorno:** Node.js
 - **Framework Web:** Express
-- **Librerías Clave:**
-  - `puppeteer`: Para scraping y automatización del navegador.
-  - `rss`: Para la generación o manipulación de feeds RSS.
+- **Integraciones Clave:**
+  - `Supabase Webhooks`: Para la detección automática de nuevas noticias.
+  - `Make.com`: Plataforma de automatización para orquestar el flujo.
 
 ## 3. Registro de Decisiones Clave
 
 *(A completar a medida que avance el proyecto. Aquí anotaremos las decisiones importantes y su porqué).*
+
+- **23/09/2025**: Se cambió la estrategia de "Detección de Novedades" de scraping (Node.js/Puppeteer) a un enfoque basado en webhooks de Supabase integrados con Make.com. Justificación: Mayor eficiencia, robustez y menor mantenimiento al aprovechar las capacidades nativas de Supabase.
 
 - **[Fecha]**: [Decisión] - [Justificación].
 
@@ -26,7 +28,7 @@ El objetivo de este proyecto es crear un sistema que automatice la publicación 
 
 *Definido por Matías y Gemini.*
 
-- [ ] **Fase 1: Detección de Novedades.** Nuestro sistema necesita una forma de "enterarse" automáticamente cada vez que se publica/edita una noticia o se sube un video en la web.
+- [x] **Fase 1: Detección de Novedades.** Nuestro sistema necesita una forma de "enterarse" automáticamente cada vez que se publica/edita una noticia o se sube un video en la web. (Implementado vía Supabase Webhooks a Make.com)
 - [ ] **Fase 2: Extracción de Contenido.** Una vez que el sistema sabe que hay algo nuevo, necesita "leer" la información relevante para el posteo (el título, la imagen o miniatura del video, y el enlace).
 - [ ] **Fase 3: Publicación Automática.** Con la información ya extraída, el sistema debe ser capaz de formatearla y publicarla como un nuevo post en las redes sociales definidas (Facebook, etc.).
 
