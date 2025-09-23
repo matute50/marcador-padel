@@ -64,3 +64,5 @@ build/Release
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
+last_article.txt 
+last_video.txt 

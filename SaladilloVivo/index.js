@@ -1,102 +1,103 @@
-const express = require('express');
-const puppeteer = require('puppeteer');
-const RSS = require('rss');
+const fs = require('fs').promises;
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
+const path = require('path');
+const axios = require('axios'); // Importar axios
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const ARTICLE_STATE_FILE = path.join(__dirname, 'last_article.txt');
+const VIDEO_STATE_FILE = path.join(__dirname, 'last_video.txt');
+const SCRAPER_SCRIPT = path.join(__dirname, 'scraper.js');
 
-// URL del sitio a scrapear
-const SITE_URL = 'https://saladillovivo.com.ar/';
+// URLs de los Webhooks de Make.com (¡REEMPLAZAR CON LAS REALES!)
+const ARTICLE_WEBHOOK_URL = 'https://hook.us2.make.com/u0316xmmpxw28ith0ncuv39nrf9mnycn';
+const VIDEO_WEBHOOK_URL = 'https://hook.us2.make.com/4kdpty5wvye72sjef3m7gmvfc1fht2vx';
 
-// Endpoint raíz para confirmar que el servidor está funcionando
-app.get('/', (req, res) => {
-  res.send('Servidor de feed RSS para Saladillo Vivo está funcionando.');
-});
+async function main() {
+  console.log('Iniciando proceso de verificación de contenido...');
 
-// --- NUEVO ENDPOINT DE DEPURACIÓN ---
-app.get('/debug-html', async (req, res) => {
-  console.log('Solicitud recibida en /debug-html. Devolviendo HTML de la página...');
+  // --- Leer estados anteriores ---
+  let lastArticleHeadline = null;
+  let lastVideoId = null;
+
   try {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto(SITE_URL, { waitUntil: 'networkidle2' });
-    const pageContent = await page.content();
-    await browser.close();
-    res.send(pageContent);
+    lastArticleHeadline = await fs.readFile(ARTICLE_STATE_FILE, 'utf-8');
+    console.log(`Último artículo guardado: "${lastArticleHeadline}"`);
   } catch (error) {
-    console.error('Error durante la captura de HTML:', error);
-    res.status(500).send('Error al capturar el HTML.');
+    if (error.code === 'ENOENT') {
+      console.log('No se encontró archivo de estado para artículos.');
+    } else {
+      throw error;
+    }
   }
-});
-
-// Endpoint para generar el feed RSS
-app.get('/feed', async (req, res) => {
-  console.log('Solicitud recibida en /feed. Iniciando scraping...');
 
   try {
-    // 1. INICIAR PUPPETEER Y NAVEGAR A LA PÁGINA
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto(SITE_URL, { waitUntil: 'networkidle2' });
-    console.log('Página cargada en Puppeteer.');
+    lastVideoId = await fs.readFile(VIDEO_STATE_FILE, 'utf-8');
+    console.log(`Último video guardado: "${lastVideoId}"`);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      console.log('No se encontró archivo de estado para videos.');
+    } else {
+      throw error;
+    }
+  }
 
-    // 2. EXTRAER LA INFORMACIÓN DE LAS NOTICIAS
-    // Se ejecuta este código dentro del navegador para acceder al DOM
-    const articles = await page.evaluate(() => {
-      // Selector de los contenedores de cada noticia.
-      // Este es el paso más frágil, depende de la estructura del HTML del sitio.
-      const articleElements = document.querySelectorAll('article.post');
+  // --- Ejecutar Scraper ---
+  console.log('\nEjecutando scraper para obtener contenido actual...');
+  const { stdout, stderr } = await exec(`node ${SCRAPER_SCRIPT}`);
+  if (stderr) throw new Error(`Error en scraper.js: ${stderr}`);
+  const content = JSON.parse(stdout);
+
+  // --- Procesar Artículo ---
+  if (content.article && content.article.headline) {
+    console.log(`\nArtículo actual: "${content.article.headline}"`);
+    if (content.article.headline !== lastArticleHeadline) {
+      console.log('--- ¡NUEVO ARTÍCULO DETECTADO! ---');
+      console.log('DATOS:', content.article);
       
-      const articlesData = [];
-      articleElements.forEach(article => {
-        const titleElement = article.querySelector('h2.entry-title a');
-        const descriptionElement = article.querySelector('div.entry-summary');
+      try {
+        await axios.post(ARTICLE_WEBHOOK_URL, content.article);
+        console.log('Webhook de artículo enviado con éxito a Make.com.');
+      } catch (axiosError) {
+        console.error('Error al enviar webhook de artículo:', axiosError.message);
+      }
 
-        if (titleElement && descriptionElement) {
-          articlesData.push({
-            title: titleElement.innerText,
-            url: titleElement.href,
-            description: descriptionElement.innerText.trim(),
-          });
-        }
-      });
-      return articlesData;
-    });
-    console.log(`Se encontraron ${articles.length} artículos.`);
-
-    await browser.close();
-
-    // 3. CREAR EL FEED RSS
-    const feed = new RSS({
-      title: 'Saladillo Vivo - Feed no oficial',
-      description: 'Feed RSS generado automáticamente de las últimas noticias de saladillovivo.com.ar',
-      feed_url: `http://localhost:${PORT}/feed`,
-      site_url: SITE_URL,
-      language: 'es',
-    });
-
-    // Agrega cada artículo extraído al feed
-    articles.forEach(article => {
-      feed.item({
-        title: article.title,
-        description: article.description,
-        url: article.url,
-        guid: article.url, // Usamos la URL como un identificador único
-        date: new Date(), // El sitio no provee fecha fácil de scrapear, usamos la fecha actual
-      });
-    });
-
-    // 4. ENVIAR LA RESPUESTA
-    res.set('Content-Type', 'application/rss+xml');
-    res.send(feed.xml());
-    console.log('Feed RSS generado y enviado con éxito.');
-
-  } catch (error) {
-    console.error('Error durante el scraping o la generación del feed:', error);
-    res.status(500).send('Error al generar el feed RSS. Revisa la consola del servidor.');
+      await fs.writeFile(ARTICLE_STATE_FILE, content.article.headline);
+      console.log('Estado de artículo actualizado.');
+    } else {
+      console.log('El artículo no es nuevo.');
+    }
+  } else {
+    console.log('No se pudo obtener datos del artículo.');
   }
-});
 
-app.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+  // --- Procesar Video ---
+  if (content.video && content.video.id) {
+    console.log(`\nVideo actual: "${content.video.title}" (ID: ${content.video.id})`);
+    if (content.video.id !== lastVideoId) {
+      console.log('--- ¡NUEVO VIDEO DETECTADO! ---');
+      console.log('DATOS:', content.video);
+      
+      try {
+        await axios.post(VIDEO_WEBHOOK_URL, content.video);
+        console.log('Webhook de video enviado con éxito a Make.com.');
+      } catch (axiosError) {
+        console.error('Error al enviar webhook de video:', axiosError.message);
+      }
+
+      await fs.writeFile(VIDEO_STATE_FILE, content.video.id);
+      console.log('Estado de video actualizado.');
+    } else {
+      console.log('El video no es nuevo.');
+    }
+  
+  } else {
+    console.log('No se pudo obtener datos del video.');
+  }
+
+  console.log('\nProceso de verificación finalizado.');
+}
+
+main().catch(error => {
+  console.error('Ha ocurrido un error en el proceso principal:', error);
+  process.exit(1);
 });
