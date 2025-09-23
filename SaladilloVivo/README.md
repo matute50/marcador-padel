@@ -6,15 +6,16 @@ El objetivo de este proyecto es crear un sistema que automatice la publicación 
 
 ## Estrategia
 
-Dado que `saladillovivo.com.ar` no posee un feed RSS nativo (carga el contenido dinámicamente con JavaScript), la estrategia es la siguiente:
+Dado que `saladillovivo.com.ar` carga su contenido dinámicamente, la estrategia implementada es la siguiente:
 
-1.  **Crear un Feed RSS Personalizado:** Desarrollar un pequeño servidor web utilizando Node.js y Express.
-2.  **Endpoint `/feed`:** Este servidor expondrá un endpoint (ej. `http://localhost:3000/feed`) que, al ser consultado, generará un archivo XML con formato RSS conteniendo las últimas noticias del sitio.
-3.  **Integración con IFTTT:** Se utilizará el feed RSS generado como "trigger" en IFTTT (o un servicio similar) para que, cada vez que haya una nueva noticia en el feed, se publique automáticamente en las redes sociales configuradas.
+1.  **Scraper con Puppeteer:** Un script de Node.js (`scraper.js`) utiliza la librería Puppeteer para lanzar un navegador en segundo plano, cargar la página y extraer la información del último artículo y del último video.
+2.  **Detección de Cambios:** El script principal (`index.js`) ejecuta el scraper, compara los resultados con el último contenido procesado (guardado localmente) y detecta si hay novedades.
+3.  **Integración con Webhooks:** Si se detecta un nuevo artículo o video, el sistema envía los datos (título, URL, imagen) a un webhook específico en Make.com.
+4.  **Publicación en Redes Sociales:** Dos escenarios en Make.com reciben estos datos y se encargan de formatearlos y publicarlos automáticamente en las redes sociales correspondientes.
 
 ## Estado Actual
 
-- **Infraestructura:** Se ha creado la estructura de carpetas del proyecto y se ha inicializado un repositorio de Git.
-- **Próximo Paso:** Implementar el servidor de Node.js para generar el feed RSS.
+- **Funcional:** El sistema es completamente funcional. Detecta nuevo contenido (artículos y videos) y lo envía a Make.com para su publicación.
+- **Próximo Paso:** Refinar y robustecer el código existente.
 
 **Versión del Documento:** 2.0
